@@ -1,4 +1,4 @@
-state = {
+states = {
     'DE1': 'Baden-Württemberg',
     'DE2': 'Bavaria',
     'DE3': 'Berlin',
