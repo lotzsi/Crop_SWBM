@@ -15,7 +15,7 @@ nuts_regions = gpd.read_file(shapefile_path)
 nuts_regions = nuts_regions[['NUTS_ID', 'geometry']]
 
 # Load the text file containing the NUTS region codes
-crop_yield = pd.read_csv(file_path, sep='\t', na_values=':')
+crop_yield = pd.read_csv(file_path, sep='\t')#, na_values=':')
 
 # Extract the desired columns and remove the unwanted characters
 crop_yield['NUTS_ID'] = crop_yield['freq,crops,strucpro,geo\TIME_PERIOD'].str.split(',').str[-1]
@@ -25,6 +25,8 @@ crop_yield['freq'] = crop_yield['freq,crops,strucpro,geo\TIME_PERIOD'].str.split
 
 # Drop the original column
 crop_yield.drop(columns=['freq,crops,strucpro,geo\TIME_PERIOD'], inplace=True)
+# Replace ':' with 0
+crop_yield.replace(':', 0, inplace=True)
 print(crop_yield.head())
 
 # Select only the year columns and the "NUTS_ID" column
