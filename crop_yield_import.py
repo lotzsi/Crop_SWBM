@@ -32,7 +32,3 @@ joined_data = pd.merge(nuts_regions, crop_yield, on='NUTS_ID', how='inner')
 
 # Now `joined_data` contains both the geometries from the shapefile and the data from the text file joined together
 print(joined_data.head())
-
-
-
-
