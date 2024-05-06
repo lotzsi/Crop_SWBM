@@ -1,0 +1,8 @@
+Data source:
+https://ec.europa.eu/eurostat/web/main/data/database
+Crop production in EU standard humidity (apro_cpsh1)	
+https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/apro_cpsh1?format=TSV&compressed=true
+Crop production in EU standard humidity by NUTS 2 regions (apro_cpshr)	
+https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/apro_cpshr?format=TSV&compressed=true
+
+
