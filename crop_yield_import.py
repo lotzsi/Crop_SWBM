@@ -51,5 +51,6 @@ filtered_data = joined_data[joined_data["NUTS_ID"].isin(nuts_ids_to_keep)]
 
 print(filtered_data.head())
 
-filtered_data.to_csv('crop_yield_DE.csv', index = False)
+filtered_data.to_file('data/crop_yield/crop_yield_DE.shp', index = False)
+
 
