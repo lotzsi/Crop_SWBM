@@ -14,7 +14,6 @@ nuts_regions = gpd.read_file(shapefile_path)
 #only keep NUTS_ID and geometry
 nuts_regions = nuts_regions[['NUTS_ID', 'geometry']]
 
-
 # Load the text file containing the NUTS region codes
 crop_yield = pd.read_csv(file_path, sep='\t')
 
@@ -26,9 +25,19 @@ crop_yield['freq'] = crop_yield['freq,crops,strucpro,geo\TIME_PERIOD'].str.split
 
 # Drop the original column
 crop_yield.drop(columns=['freq,crops,strucpro,geo\TIME_PERIOD'], inplace=True)
-
 # Perform the join based on the common column (NUTS region code)
 joined_data = pd.merge(nuts_regions, crop_yield, on='NUTS_ID', how='inner')
+filter_DE = joined_data[joined_data["NUTS_ID"].str.startswith("DE")]
 
 # Now `joined_data` contains both the geometries from the shapefile and the data from the text file joined together
-print(joined_data.head())
+
+import dictionary_states as ds #import dictionary with keys for study regions
+
+# Get the list of NUTS IDs from the dictionary keys
+nuts_ids_to_keep = list(ds.states.keys())
+
+# Filter the DataFrame to keep only the rows where the "NUTS_ID" column matches the keys in the dictionary
+filtered_data = joined_data[joined_data["NUTS_ID"].isin(nuts_ids_to_keep)]
+filtered_data = filtered_data.drop_duplicates()
+
+#filtered_data.to_csv('filtered_data.csv', index=False)
