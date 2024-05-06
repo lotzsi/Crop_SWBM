@@ -55,4 +55,3 @@ intersection = overlay(grid_gdf, crops_counties, how='intersection')
 intersection.plot()
 plt.show()
 
-
