@@ -4,7 +4,6 @@ import numpy as np
 import netCDF4 as nc
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
-# Create a colormap using ListedColormap
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import BoundaryNorm
 import matplotlib as mpl
@@ -14,6 +13,7 @@ crops_counties = gpd.read_file("data/crop_yield/crop_yield_DE.shp")
 crops_counties = crops_counties.to_crs(epsg=4326)
 
 # Open the NetCDF file
+
 precipitation_file = "data/total_precipitation/tp.daily.calc.era5.0d50_CentralEurope.2000.nc"
 nc_file = nc.Dataset(precipitation_file)
 
