@@ -21,7 +21,7 @@ colors = {
     'DE1':'darkred',
     'DE2': 'red',
     'DE7': 'salmon',
-    'DEC': 'peru',
+    'DEC': 'coral',
     'DEB': 'darkorange',
     'DED':'darkgreen',
     'DEE':'limegreen',
