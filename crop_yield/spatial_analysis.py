@@ -56,7 +56,7 @@ import dictionary_states as ds
 for index, row in grid_gdf.iterrows():
     point = row['geometry']
     county = find_matching_county(point)  # Find the corresponding county for each point
-    color = ds.colors.get(county, 'grey')  # Get the color for the county, default to grey if not found
+    color = ds.colors.get(county, 'none')  # Get the color for the county, default to grey if not found
     plt.plot(point.x, point.y, marker='s', markersize= 15, color=color, alpha = 0.5)
 
 plt.xlabel('Longitude')
