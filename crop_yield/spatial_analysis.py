@@ -4,6 +4,10 @@ import numpy as np
 import netCDF4 as nc
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
+# Create a colormap using ListedColormap
+from matplotlib.colors import ListedColormap
+from matplotlib.colors import BoundaryNorm
+import matplotlib as mpl
 
 # Load the geometries of German counties
 crops_counties = gpd.read_file("data/crop_yield/crop_yield_DE.shp")
@@ -64,50 +68,6 @@ plt.ylabel('Latitude')
 plt.title('Grid Points Colored by County')
 plt.savefig('crop_yield/Figures/grid_points_colored_by_county.png', transparent = True)
 plt.show()
-
-
-
-
-# Load the geometries of German counties
-crops_counties = gpd.read_file("data/crop_yield/crop_yield_DE.shp")
-crops_counties = crops_counties.to_crs(epsg=3035)  # Change to a projected CRS (Equal Earth)
-
-# Create a grid of lon-lat combinations
-lon, lat = np.meshgrid(np.linspace(crops_counties.total_bounds[0], crops_counties.total_bounds[2], 100),
-                       np.linspace(crops_counties.total_bounds[1], crops_counties.total_bounds[3], 100))
-
-# Create a GeoDataFrame with Point objects for each lon-lat combination
-grid_gdf = gpd.GeoDataFrame(geometry=[Point(lon_val, lat_val) for lon_val, lat_val in zip(lon.flatten(), lat.flatten())],
-                             crs='EPSG:4326')  # Use EPSG:4326 for lon-lat points
-
-# Project the grid points to the same CRS as the counties
-grid_gdf = grid_gdf.to_crs(crops_counties.crs)
-
-# Create a Basemap instance
-m = Basemap(llcrnrlon=lon.min(), llcrnrlat=lat.min(),
-            urcrnrlon=lon.max(), urcrnrlat=lat.max(),
-            projection='cyl', resolution='l')
-
-# Plot the basemap
-m.drawcountries(linewidth=0.5)
-m.drawcoastlines(linewidth=0.5)
-
-# Plot the grid points with colors corresponding to the counties
-for index, row in grid_gdf.iterrows():
-    point = row['geometry']
-    color = 'grey'  # Default color if county not found
-    for _, county in crops_counties.iterrows():
-        if point.within(county.geometry):
-            color = 'r'  # Set color based on county
-            break
-    x, y = m(point.x, point.y)
-    m.scatter(x, y, color=color, s=10)
-
-plt.xlabel('Longitude')
-plt.ylabel('Latitude')
-plt.title('Grid Points Colored by County')
-plt.show()
-
 
 # Example DataFrame containing lon, lat, and soil moisture values
 # Replace this with your actual DataFrame
