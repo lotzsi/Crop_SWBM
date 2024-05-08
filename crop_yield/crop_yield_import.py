@@ -48,6 +48,7 @@ nuts_ids_to_keep = list(ds.states.keys())
 
 # Filter the DataFrame to keep only the rows where the "NUTS_ID" column matches the keys in the dictionary
 filtered_data = joined_data[joined_data["NUTS_ID"].isin(nuts_ids_to_keep)]
+filtered_data.to_csv('filtered_data_all.csv', index = False)
 
 # filter on ‘Cereals (excluding rice) for the production of grain (including seed)', 'Wheat and spelt', 'Potatoes (including seed potatoes)', and'Sugar beet (excluding seed)' 
 #filtered keys: C1000   Cereals (excluding rice) for the production of grain (including seed)
@@ -55,7 +56,7 @@ filtered_data = joined_data[joined_data["NUTS_ID"].isin(nuts_ids_to_keep)]
 #               R1000   Potatoes (including seed potatoes)
 #               R2000   Sugar beet (excluding seed)
 
-filtered_data = filtered_data[filtered_data['crops'].isin(['C1000', 'C1100', 'R1000', 'R2000'])]
+filtered_data = filtered_data[filtered_data['crops'].isin(['C0000', 'C1100', 'R1000', 'R2000'])]
 
 print(filtered_data.head())
 filtered_data.to_csv('filtered_data.csv', index = False)
