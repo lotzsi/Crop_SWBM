@@ -62,10 +62,7 @@ for index, row in grid_gdf.iterrows():
 plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 plt.title('Grid Points Colored by County')
-plt.savefig('crop_yield/Figures/grid_points_colored_by_county.png', transparent = True)
 plt.show()
-
-
 
 
 # Load the geometries of German counties
@@ -106,42 +103,3 @@ plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 plt.title('Grid Points Colored by County')
 plt.show()
-
-
-# Example DataFrame containing lon, lat, and soil moisture values
-# Replace this with your actual DataFrame
-# Example DataFrame
-#data = {
- #   'lon': [4.75, 5.25, 5.75, 6.25, 6.75],
-  #  'lat': [54.75, 54.25, 53.75, 53.25, 52.75],
-   # 'soil_moisture': [0.1, 0.2, 0.3, 0.4, 0.5]
-#}
-#grid_df = pd.DataFrame(data)
-
-# Create an empty list to store the grid cell center points
-grid_centerpoints = []
-
-# Iterate over each lon and lat value and create Point objects
-for lon_val, lat_val in zip(grid_df['lon'], grid_df['lat']):
-    grid_centerpoints.append(Point(lon_val, lat_val))
-
-# Create an empty dictionary to store soil moisture values for each county
-soil_moisture_by_county = {county_name: [] for county_name in crops_counties['NUTS_ID']}
-
-# Iterate over each grid cell center point
-for center_point, soil_moisture in zip(grid_centerpoints, grid_df['soil_moisture']):
-    # Iterate over each county polygon
-    for index, county in crops_counties.iterrows():
-        # Check if the center point is within the county polygon
-        if center_point.within(county.geometry):
-            # If it is, append the soil moisture value to the corresponding county
-            county_name = county['NUTS_ID']
-            soil_moisture_by_county[county_name].append(soil_moisture)
-            break  # Exit the loop once a matching polygon is found
-
-# Add soil moisture values to the crops_counties GeoDataFrame
-for county_name, soil_moisture_values in soil_moisture_by_county.items():
-    crops_counties.loc[crops_counties['NUTS_ID'] == county_name, 'soil_moisture_values'] = soil_moisture_values
-
-# Print the crops_counties GeoDataFrame with soil moisture values
-print(crops_counties)
