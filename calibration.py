@@ -4,7 +4,7 @@ import pandas as pd
 import netCDF4 as nc
 import itertools
 from scipy.stats import pearsonr
-import run
+import run_ac
 import os
 
 os.makedirs('calibration_results', exist_ok=True)
@@ -103,7 +103,7 @@ for filename in os.listdir(folder_path):
         lai_data.append(nc_file.variables['lai'][:,b,a])
         nc_file.close()  
 
-    comb_corr_df[str(latitude), str(longitude)] = run.calibration_allcatchments(P_data, R_data, T_data,lai_data, filtered_df, calibration_time[1]-calibration_time[0], parameter_combinations)
+    comb_corr_df[str(latitude), str(longitude)] = run_ac.calibration_allcatchments(P_data, R_data, T_data,lai_data, filtered_df, calibration_time[1]-calibration_time[0], parameter_combinations)
     print(counter, 'catchment(s) done')
     
     file_id = os.path.basename(file_path).split('_')[0]
