@@ -84,8 +84,9 @@ grid_gdf = gpd.GeoDataFrame(geometry=[Point(lon_val, lat_val) for lon_val, lat_v
 grid_gdf = grid_gdf.to_crs(crops_counties.crs)
 
 # Create a Basemap instance
-m = Basemap(projection='cyl', llcrnrlon=crops_counties.total_bounds[0], llcrnrlat=crops_counties.total_bounds[1],
-            urcrnrlon=crops_counties.total_bounds[2], urcrnrlat=crops_counties.total_bounds[3], resolution='l')
+m = Basemap(llcrnrlon=lon.min(), llcrnrlat=lat.min(),
+            urcrnrlon=lon.max(), urcrnrlat=lat.max(),
+            projection='cyl', resolution='l')
 
 # Plot the basemap
 m.drawcountries(linewidth=0.5)
