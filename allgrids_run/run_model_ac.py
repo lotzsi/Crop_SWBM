@@ -4,9 +4,8 @@ import pandas as pd
 import netCDF4 as nc
 import itertools
 from scipy.stats import pearsonr
-import allgrids_run.run_ac as run_ac
+import run_ac
 import os
-'Reads in data. There is one hardcoded number 8400 in line 17. depends on the number of days you read in'
 years = np.arange(2001,2024,1)
 params = [420, 8, 0.2, 0.8, 1.5, (0.75, 0.25)]
 os.makedirs('calibration_results', exist_ok=True)
