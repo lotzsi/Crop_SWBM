@@ -35,3 +35,9 @@ colors = {
     'DE6': 'darkgrey',
     'DE5': 'lightgrey'
 }
+
+crop_types = {
+    'C1100' :   'Wheat and Spelt',
+    'R1000' :   'Potatoes (including seed potatoes)',
+    'R2000' :   'Sugar beet (excluding seed)'
+}
