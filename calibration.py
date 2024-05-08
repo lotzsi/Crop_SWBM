@@ -4,7 +4,7 @@ import pandas as pd
 import netCDF4 as nc
 import itertools
 from scipy.stats import pearsonr
-import run_ac
+import allgrids_run.run_ac as run_ac
 import os
 
 os.makedirs('calibration_results', exist_ok=True)

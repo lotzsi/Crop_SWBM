@@ -1,9 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import netCDF4 as nc
-import itertools
-from scipy.stats import pearsonr
+'Use as helper to test snow function'
+
 
 def snow_function(Snow_n, P_n, T_n,
         c_m):  # Returns 1. Amount of snow after a time step and 2. Amount of water coming into the soil (liquid rain and/or melting snow)

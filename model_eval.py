@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 import numpy as np
 import netCDF4 as nc
-from run_ac import time_evolution
+from allgrids_run.run_ac import time_evolution
 from run_basic import time_evolution as time_evolution_basic
 import pandas as pd
 from scipy.stats import pearsonr

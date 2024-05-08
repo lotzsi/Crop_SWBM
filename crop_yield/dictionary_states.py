@@ -16,3 +16,33 @@ states = {
     'DEF': 'Schleswig-Holstein',
     'DEG': 'Thuringia'
 }
+
+south_states = {
+    'DE1':'darkred',
+    'DE2': 'red',
+    'DE7': 'salmon',
+    'DEC': 'peru',
+    'DEB': 'darkorange'
+}
+
+middle_states = {
+    'DED':'darkgreen',
+    'DEE':'limegreen',
+    'DEG':'palegreen',
+    'DEA':'forestgreen'
+
+}
+
+north_states = {
+    'DE9':'midnightblue',
+    'DEF':'dodgerblue',
+    'DE8':'cyan',
+    'DE4':'lightskyblue'
+}
+
+
+city_state = {
+    'DE3': 'grey',
+    'DE6': 'darkgrey',
+    'DE5': 'lightgrey'
+}
