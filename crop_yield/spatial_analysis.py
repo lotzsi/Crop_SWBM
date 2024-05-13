@@ -8,6 +8,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.colors import BoundaryNorm
 import matplotlib as mpl
 import pandas as pd
+import os
 
 # Load the geometries of German counties
 crops_counties = gpd.read_file("data/crop_yield/crop_yield_DE.shp")
@@ -78,10 +79,6 @@ print(grid_gdf.tail())
 grid_gdf.fillna(0, inplace=True)
 
 
-# Load the geometries of German counties
-crops_counties = gpd.read_file("data/crop_yield/crop_yield_DE.shp")
-crops_counties = crops_counties.to_crs(epsg=4326)
-
 # Define a function to find the matching county for each point
 def find_matching_county(point):
     for index, county_geometry in crops_counties.geometry.items():
@@ -136,3 +133,68 @@ plt.ylabel('Latitude')
 plt.title('Mean Soil Moisture by County for Year 2000')
 plt.savefig('crop_yield/Figures/mean_WSI_by_county_2000.png', transparent=True)
 plt.show()
+
+# Define the folder containing the CSV files
+folder_path = 'crop_yield/averaged'
+output_folder = 'crop_yield/averaged/crop_yield_processed/'
+
+# Iterate over each CSV file in the folder
+for file_name in os.listdir(folder_path):
+    if file_name.endswith('.csv'):
+        # Load the CSV file
+        df = pd.read_csv(os.path.join(folder_path, file_name), header=0, na_values='NaN')
+        # Fill NaN values with 0s
+        df.fillna(0, inplace=True)
+
+        # Assuming you have a DataFrame named df with 'lon' and 'lat' columns
+        geometry = [Point(lon, lat) for lon, lat in zip(df['lon'], df['lat'])]
+
+        # Create a GeoDataFrame
+        grid_gdf = gpd.GeoDataFrame(df.iloc[:, 2:], geometry=geometry, crs='EPSG:4326')
+        # Optionally, transform the GeoDataFrame to match the coordinate reference system (CRS) of crops_counties
+        grid_gdf = grid_gdf.to_crs(crops_counties.crs)
+
+        # Create an empty dictionary to store the soil moisture values for each county and each year
+        county_soil_moisture = {county: {str(year): [] for year in range(2000, 2023)} for county in crops_counties['NUTS_ID']}
+
+        # Iterate over each grid cell
+        for index, grid_cell in grid_gdf.iterrows():
+            # Find the matching county for the current grid cell
+            county_name = find_matching_county(grid_cell.geometry)
+            
+            if county_name:
+                # Retrieve the soil moisture values for each year for the current grid cell
+                soil_moisture_values = [grid_cell[str(year)] for year in range(2000, 2023)]
+                
+                # Append the soil moisture values to the corresponding county and year
+                for year, value in zip(range(2000, 2023), soil_moisture_values):
+                    county_soil_moisture[county_name][str(year)].append(value)
+
+        # Calculate the mean soil moisture value for each county for each year
+        county_mean_soil_moisture = {county: {year: np.nanmean(values) for year, values in year_values.items()} for county, year_values in county_soil_moisture.items()}
+
+        # Convert the dictionary to a DataFrame
+        mean_soil_moisture_df = pd.DataFrame(county_mean_soil_moisture).T
+        mean_soil_moisture_df.index.name = 'NUTS_ID'
+
+        # Drop the 'crops' column
+        crops_counties_cleaned = crops_counties.drop('crops', axis=1)
+        # Define the range of columns to drop
+        columns_to_drop = [str(year) for year in range(2000, 2025)]
+        # Drop the columns from the crops_counties DataFrame
+        crops_counties_cleaned = crops_counties_cleaned.drop(columns=columns_to_drop)
+
+        # Keep only unique rows based on 'NUTS_ID'
+        crops_counties_unique = crops_counties_cleaned.drop_duplicates(subset=['NUTS_ID'])
+
+        # Merge the mean soil moisture values with the crops_counties GeoDataFrame
+        crops_counties_with_WSI = crops_counties_unique.merge(mean_soil_moisture_df, left_on='NUTS_ID', right_index=True, how='left')
+        crops_counties_with_WSI.fillna(0, inplace=True)
+        
+        # Save the processed data to shapefile and CSV files
+        #output_shapefile_path = os.path.join(output_folder, file_name.replace('.csv', '.shp'))
+        output_csv_path = os.path.join(output_folder, file_name.replace('.csv', '.csv'))
+        #crops_counties_with_WSI.to_file(output_shapefile_path)
+        crops_counties_with_WSI.to_csv(output_csv_path)
+
+        print(f"Processed {file_name} and saved output to {output_csv_path}")
