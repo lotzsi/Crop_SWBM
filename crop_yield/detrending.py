@@ -7,6 +7,12 @@ from pandas import DataFrame
 import geopandas as gpd
 from shapely import wkt
 
+# Detrending the data. Window size gives the percentage of the data to be used for the moving average. First two code snippets
+# are only examples to see how it works and that we need to substract the slope from the original data to detrend it.
+#3rd code snippet detrends the whole dataset and saves it as a new csv file.
+# 4th code snippet gives us a random example to show that the detrending worked fine. 
+
+#2 EXAMPLES FOR ONLY ONE ROW TO DETREND, with linear regression and only the trend
 # Read the data
 data = pd.read_csv("filtered_data.csv")
 print(data.head())
@@ -76,6 +82,8 @@ plt.savefig('crop_yield/Figures/detrended_time_seriesvsoriginal.png', transparen
 # Show plot
 plt.show()
 
+
+#FOR ALL CROPS
 # Assuming your DataFrame is named data and contains the crop yield data for multiple crop types
 # Initialize an empty DataFrame to store detrended data
 detrended_data = pd.DataFrame()
