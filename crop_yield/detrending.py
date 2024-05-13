@@ -17,7 +17,7 @@ crop_row = data.iloc[42, 3:26].astype(float)  # Assuming the crop yield data sta
 
 # Compute the moving average using lowess filter
 window_size = int(0.20 * len(crop_row))  # Window size is 20% of the entire time series
-smoothed = lowess(crop_row, np.arange(len(crop_row)), frac=1, return_sorted=False)
+smoothed = lowess(crop_row, np.arange(len(crop_row)), frac= window_size/len(crop_row), return_sorted=False)
 print(window_size)
 print(window_size/len(crop_row))
 

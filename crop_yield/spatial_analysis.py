@@ -7,6 +7,7 @@ from mpl_toolkits.basemap import Basemap
 from matplotlib.colors import ListedColormap
 from matplotlib.colors import BoundaryNorm
 import matplotlib as mpl
+import pandas as pd
 
 # Load the geometries of German counties
 crops_counties = gpd.read_file("data/crop_yield/crop_yield_DE.shp")
@@ -34,21 +35,6 @@ def find_matching_county(point):
         if point.within(county_geometry):
             return crops_counties.loc[index, 'NUTS_ID']  # Return the NUTS_ID of the matching county
 
-# Create an empty list to store the results
-grid_polygons = []
-
-# Iterate over each grid cell center point
-for index, center_point in grid_gdf.iterrows():
-    found_match = False  # Flag to indicate if a match is found
-    for index, county_geometry in crops_counties.geometry.items():
-        # Check if the center point is within the county polygon
-        if center_point.geometry.within(county_geometry):
-            # If it is, append the county polygon to the list of grid polygons
-            grid_polygons.append((center_point.geometry.x, center_point.geometry.y, county_geometry))
-            found_match = True  # Set the flag to True
-            break  # Exit the loop once a matching polygon is found
-    if not found_match:
-        print(f"No matching polygon found for grid cell center point Lon: {center_point.geometry.x}, Lat: {center_point.geometry.y}")
 
 # Plot the polygons
 crops_counties.plot(color='lightgrey', edgecolor='black', alpha=0.5, figsize=(10, 10))
@@ -68,43 +54,30 @@ plt.title('Grid Points Colored by County')
 plt.savefig('crop_yield/Figures/grid_points_colored_by_county.png', transparent = True)
 plt.show()
 
-# Example DataFrame containing lon, lat, and soil moisture values
-# Replace this with your actual DataFrame
-# Example DataFrame
-#data = {
- #   'lon': [4.75, 5.25, 5.75, 6.25, 6.75],
-  #  'lat': [54.75, 54.25, 53.75, 53.25, 52.75],
-   # 'soil_moisture': [0.1, 0.2, 0.3, 0.4, 0.5]
-#}
-#grid_df = pd.DataFrame(data)
 
-# Open the NetCDF file
-precipitation_file = "data/total_precipitation/tp.daily.calc.era5.0d50_CentralEurope.2000.nc"
-nc_file = nc.Dataset(precipitation_file)
 
-lon = nc_file.variables['lon'][:]
-lat = nc_file.variables['lat'][:]
-
-# Create a grid of lon-lat combinations
-lon_grid, lat_grid = np.meshgrid(lon, lat)
-lon_flat, lat_flat = lon_grid.flatten(), lat_grid.flatten()
-
-# Create a GeoDataFrame with Point objects for each lon-lat combination
-grid_gdf = gpd.GeoDataFrame(geometry=[Point(lon_val, lat_val) for lon_val, lat_val in zip(lon_flat, lat_flat)], crs='EPSG:4326')
-grid_gdf.to_crs(crops_counties.crs, inplace=True)
-
+#TRY2 Adding the WSI to the counties! 
+# Load the geometries of German counties
+crops_counties = gpd.read_file("data/crop_yield/crop_yield_DE.shp")
+crops_counties = crops_counties.to_crs(epsg=4326)
 #like this there is just a geometry column in the grid_gdf now I need to append the year values of the water stress index.
 
-# Iterate over each year
-for year in range(2000, 2022):
-    # Extract the water stress index for the current year from the NetCDF file
-    water_stress_index = nc_file.variables[f'WSI_{year}'][:]  # Replace 'water_stress_index' with the actual variable name
-    
-    # Add the water stress index as a new column to the GeoDataFrame
-    grid_gdf[f'WSI_{year}'] = water_stress_index.flatten()
+#here load the DF from PIA
+df = pd.read_csv('crop_yield/maximum_waterstress.csv', header = 0, na_values= 'NaN')
+# Fill NaN values with 0s
+df.fillna(0, inplace=True)
 
-# Close the NetCDF file
-nc_file.close()
+print(df.tail())
+# Assuming you have a DataFrame named df with 'lon' and 'lat' columns
+geometry = [Point(lon, lat) for lon, lat in zip(df['lon'], df['lat'])]
+
+# Create a GeoDataFrame
+grid_gdf = gpd.GeoDataFrame(df.iloc[:, 2:], geometry=geometry, crs='EPSG:4326')
+# Optionally, transform the GeoDataFrame to match the coordinate reference system (CRS) of crops_counties
+grid_gdf = grid_gdf.to_crs(crops_counties.crs)
+print(grid_gdf.tail())
+grid_gdf.fillna(0, inplace=True)
+
 
 # Load the geometries of German counties
 crops_counties = gpd.read_file("data/crop_yield/crop_yield_DE.shp")
@@ -116,73 +89,49 @@ def find_matching_county(point):
         if point.within(county_geometry):
             return crops_counties.loc[index, 'NUTS_ID']  # Return the NUTS_ID of the matching county
 
-# Create an empty dictionary to store the mean soil moisture values for each county and each year
-county_mean_WSI = {county: {str(year): [] for year in range(2000, 2022)} for county in crops_counties['NUTS_ID']}
+# Create an empty dictionary to store the soil moisture values for each county and each year
+county_soil_moisture = {county: {str(year): [] for year in range(2000, 2022)} for county in crops_counties['NUTS_ID']}
 
-# Iterate over each year
-for year in range(2000, 2022):
-    # Iterate over each grid cell center point for the current year
-    for index, center_point in grid_gdf.iterrows():
-        found_match = False  # Flag to indicate if a match is found
-        # Iterate over each county polygon
-        for index, county_geometry in crops_counties.geometry.items():
-            # Check if the center point is within the county polygon
-            if center_point.geometry.within(county_geometry):
-                # If it is, append the soil moisture value to the corresponding county and year
-                county_name = crops_counties.loc[index, 'NUTS_ID']
-                WSI_value = center_point['year'] # Replace ... with your method to retrieve soil moisture value for the grid point
-                WSI_value[county_name][str(year)].append(WSI_value)
-                found_match = True  # Set the flag to True
-                break  # Exit the loop once a matching polygon is found
-        if not found_match:
-            print(f"No matching polygon found for grid cell center point Lon: {center_point.geometry.x}, Lat: {center_point.geometry.y}")
+# Iterate over each grid cell
+for index, grid_cell in grid_gdf.iterrows():
+    # Find the matching county for the current grid cell
+    county_name = find_matching_county(grid_cell.geometry)
+    
+    if county_name:
+        # Retrieve the soil moisture values for each year for the current grid cell
+        soil_moisture_values = [grid_cell[str(year)] for year in range(2000, 2022)]
+        
+        # Append the soil moisture values to the corresponding county and year
+        for year, value in zip(range(2000, 2022), soil_moisture_values):
+            county_soil_moisture[county_name][str(year)].append(value)
 
 # Calculate the mean soil moisture value for each county for each year
-for county_name, year_values in county_mean_WSI.items():
-    for year, WSI_values in year_values.items():
-        mean_WSI = np.mean(WSI_values)
-        county_mean_WSI[county_name][year] = mean_WSI
+county_mean_soil_moisture = {county: {year: np.nanmean(values) for year, values in year_values.items()} for county, year_values in county_soil_moisture.items()}
 
 # Convert the dictionary to a DataFrame
-mean_WSI_df = pd.DataFrame(county_mean_WSI).T
+mean_soil_moisture_df = pd.DataFrame(county_mean_soil_moisture).T
+mean_soil_moisture_df.index.name = 'NUTS_ID'
+
+print(mean_soil_moisture_df)
+
+# Drop the 'crops' column
+crops_counties_cleaned = crops_counties.drop('crops', axis=1)
+# Define the range of columns to drop
+columns_to_drop = [str(year) for year in range(2000, 2025)]
+# Drop the columns from the crops_counties DataFrame
+crops_counties_cleaned = crops_counties_cleaned.drop(columns=columns_to_drop)
+
+# Keep only unique rows based on 'NUTS_ID'
+crops_counties_unique = crops_counties_cleaned.drop_duplicates(subset=['NUTS_ID'])
 
 # Merge the mean soil moisture values with the crops_counties GeoDataFrame
-crops_counties_with_WSI = crops_counties.merge(mean_WSI_df, left_on='NUTS_ID', right_index=True, how='left') 
-
+crops_counties_with_WSI = crops_counties_unique.merge(mean_soil_moisture_df, left_on='NUTS_ID', right_index=True, how='left')
+crops_counties_with_WSI.fillna(0, inplace=True)
+crops_counties_with_WSI.to_file("data/crop_yield/crop_yield_DE_WSI.shp")
 # Plot the polygons
-crops_counties_with_WSI.plot(column='2000', cmap='viridis', edgecolor='black', alpha=0.5, legend=True, figsize=(10, 10))
+crops_counties_with_WSI.plot(column='2018', cmap='hot', edgecolor='black', alpha=0.5, legend=True, figsize=(10, 10))
 plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 plt.title('Mean Soil Moisture by County for Year 2000')
 plt.savefig('crop_yield/Figures/mean_WSI_by_county_2000.png', transparent=True)
 plt.show()
-
-
-# Create an empty list to store the grid cell center points
-grid_centerpoints = []
-
-# Iterate over each lon and lat value and create Point objects
-for lon_val, lat_val in zip(grid_df['lon'], grid_df['lat']):
-    grid_centerpoints.append(Point(lon_val, lat_val))
-
-# Create an empty dictionary to store soil moisture values for each county
-soil_moisture_by_county = {county_name: [] for county_name in crops_counties['NUTS_ID']}
-
-# Iterate over each grid cell center point
-for center_point, soil_moisture in zip(grid_centerpoints, grid_df['soil_moisture']):
-    # Iterate over each county polygon
-    for index, county in crops_counties.iterrows():
-        # Check if the center point is within the county polygon
-        if center_point.within(county.geometry):
-            # If it is, append the soil moisture value to the corresponding county
-            county_name = county['NUTS_ID']
-            soil_moisture_by_county[county_name].append(soil_moisture)
-            break  # Exit the loop once a matching polygon is found
-
-# Add soil moisture values to the crops_counties GeoDataFrame
-for county_name, soil_moisture_values in soil_moisture_by_county.items():
-    crops_counties.loc[crops_counties['NUTS_ID'] == county_name, 'soil_moisture_values'] = soil_moisture_values
-
-# Print the crops_counties GeoDataFrame with soil moisture values
-print(crops_counties)
-print(crops_counties.head())   
