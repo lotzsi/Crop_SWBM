@@ -91,7 +91,8 @@ detrended_data = pd.DataFrame()
 # Iterate over each row in the DataFrame
 for index, row in data.iterrows():
     crop_row = row[3:26].astype(float)  # Assuming the crop yield data starts from the third column
-
+    # Calculate the row-wise mean
+    row_mean = crop_row.mean()
     # Apply LOWESS smoothing to the crop yield data
     smoothed = lowess(crop_row, np.arange(len(crop_row)), frac=1, return_sorted=False)
 
@@ -103,7 +104,7 @@ for index, row in data.iterrows():
     slope = regression_model.coef_[0]
 
     # Subtract the slope from the original data to detrend
-    detrended = crop_row - slope * np.arange(len(crop_row))
+    detrended = crop_row - slope * np.arange(len(crop_row)) - row_mean
 
     # Append detrended data to the detrended_data DataFrame
     detrended_data = pd.concat([detrended_data, pd.DataFrame(detrended).T])
@@ -113,7 +114,7 @@ detrended_data.columns = data.columns[3:26]
 # Add the first three columns of the original data to detrended_data
 detrended_data = pd.concat([data.iloc[:, :3], detrended_data], axis=1)
 
-detrended_data.to_csv('crop_yield/detrended_data.csv', index=False)
+detrended_data.to_csv('crop_yield/detrended_data_wo_avg.csv', index=False)
 # Convert geometry strings to Shapely geometry objects
 detrended_data['geometry'] = detrended_data['geometry'].apply(wkt.loads)
 gdf = gpd.GeoDataFrame(detrended_data)
