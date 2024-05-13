@@ -1,10 +1,23 @@
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import netCDF4 as nc
 import itertools
+
+import pandas as pd
 from scipy.stats import pearsonr
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from tqdm import tqdm
+import xarray as xr
+
+
+def date_range(start, end):
+    # Convert start and end dates to datetime64[ns] objects
+    start_date = np.datetime64(start)
+    end_date = np.datetime64(end)
+
+    # Generate the date range as datetime64[ns] objects
+    date_range = np.arange(start_date, end_date + np.timedelta64(1, 'D'),
+                           dtype='datetime64[D]')
+
+    return pd.to_datetime(date_range)
 
 
 def calc_et_weight(temp, lai, w):
@@ -46,34 +59,35 @@ def evapotranspiration(wn, Rn, cs, beta, gamma):
             return 0, Snow_n + P_n  # no snow remains, all existing snow melts
         else:
             return Snow_n - SnowMelt, SnowMelt + P_n  # Some snow remains, some snow melts'''
-        
+
 
 def snow_function(Snow_n, P_n, T_n, c_m):
+    snow_stays_mask = T_n > np.ones_like(T_n) * 273.15
+    no_snow_mask = Snow_n >= 0.001 * np.ones_like(T_n)
 
-    # Element-wise comparison for temperature below freezing
-    snow_condition = T_n <= 273.15
+    # -- Calculate snow
+    snow_masked = np.ma.array(Snow_n + P_n, mask=snow_stays_mask)
+    snow_out_masked = np.ma.array(
+        snow_masked.filled(fill_value=np.zeros_like(Snow_n)),
+        mask=snow_stays_mask & no_snow_mask,
+        fill_value=snow_masked.fill_value)
 
-
-    # Element-wise comparison for negligible snow accumulation and temperature above freezing
-    no_snow_condition = np.logical_and(Snow_n < 0.001, ~snow_condition)
-
-    # Element-wise snow melting calculation
+    # melting snow
     SnowMelt = c_m * (T_n - 273.15)
 
-    # Conditions for snow melting
-    snow_melting_condition = np.logical(~no_snow_condition)#, SnowMelt > Snow_n)
-    if np.any(snow_melting_condition):
-        print('snow_melting_condition\n', snow_melting_condition)
+    snow_out = snow_out_masked.filled(fill_value=Snow_n - SnowMelt)
 
-    # Calculate results based on conditions
-    #snow_result = np.where(snow_melting_condition, 0, np.where(no_snow_condition, 0, np.maximum(Snow_n - SnowMelt, 0)))
-    snow_result = np.where(snow_melting_condition, 0, np.where(snow_condition, 0, np.maximum(Snow_n - SnowMelt, 0)))
+    snow_out[snow_out < 0] = 0
 
-    water_infiltration = np.where(snow_melting_condition, Snow_n + P_n, np.where(no_snow_condition, P_n, SnowMelt + P_n))
-    if np.any(snow_condition):
-        print('should be new snow \n', snow_condition)
-        print('snow results\n', snow_result)
-    return snow_result, water_infiltration
+    # -- Calculate water
+    water_masked = np.ma.array(np.zeros_like(Snow_n), mask=snow_stays_mask)
+    water_out_masked = np.ma.array(
+        water_masked.filled(fill_value=P_n),
+        mask=snow_stays_mask & no_snow_mask,
+        fill_value=snow_masked.fill_value)
+    water_out = water_out_masked.filled(fill_value=SnowMelt + P_n)
+
+    return snow_out, water_out
 
 
 def water_balance(wn, Pn, Rn, Snown, Tn, cs, alpha, beta, gamma, c_m):
@@ -95,8 +109,31 @@ def water_balance(wn, Pn, Rn, Snown, Tn, cs, alpha, beta, gamma, c_m):
     return Qn, En, w_next, snow
 
 
-def time_evolution(full_data, cs, alpha,
-        gamma, beta, c_m, et_weight):
+def out2xarray(output, start_year=2000, end_year=2024):
+    output = np.moveaxis(output, 2, 0)  # move time axis to be first axis
+
+    # get dates and coordinates
+    times = date_range('2000-01-01', '2023-12-31')
+    nc_file = nc.Dataset(f'data/total_precipitation/tp.daily.calc.era5.0d50_CentralEurope.2005.nc')
+    lons = nc_file.variables['lon'][:].data
+    lats = nc_file.variables['lat'][:].data
+    nc_file.close()
+
+    out_dict = {}
+    for i, out_name in enumerate(['runoff',
+                                  'evapotranspiration',
+                                  'soil_moisture',
+                                  'snow']):
+        out_xr = xr.DataArray(output[:, :, :, i], dims=('time', 'lat', 'lon'),
+                              coords={'time': times,
+                                      'lat': lats,
+                                      'lon': lons})
+        out_dict[out_name] = out_xr
+
+    return xr.Dataset(out_dict)
+
+
+def time_evolution(full_data, cs, alpha, gamma, beta, c_m, et_weight):
     """Calculates the time evolution of the soil moisture, runoff and evapotranspiration.
     Input:  w_0: initial soil moisture [mm]
             P_data: precipitation data [m/day]
@@ -114,43 +151,41 @@ def time_evolution(full_data, cs, alpha,
     T_data = full_data[:, :, :, 2]
     lai_data = full_data[:, :, :, 3]
 
-
-    w_0 = 0.9 * cs *np.ones_like((P_data[:, :, 0]))
+    w_0 = 0.9 * cs * np.ones_like((P_data[:, :, 0]))
     Snow_0 = np.zeros_like((P_data[:, :, 0]))
     conv = 1 / 2260000  # from J/day/m**2 to mm/day
     R_data = R_data * conv
     P_data = P_data * 10 ** 3  # from m/day to mm/day
-    output = np.zeros((len(P_data[:, 0, 0]), len(P_data[0, :, 0]), len(P_data[0, 0, :]), 4))
+    output = np.zeros(
+        (len(P_data[:, 0, 0]), len(P_data[0, :, 0]), len(P_data[0, 0, :]), 4))
 
     # Precompute ET parameter
     et_coefs = beta * calc_et_weight(T_data, lai_data, et_weight)
     print('start_timeevolution')
-    #for t in range(1, len(P_data[0,0,:]) + 1):
-    for t in range(1,100):
-        print('new timestep')
-        P = P_data[:,:,t - 1]
-        R = R_data[:,:,t - 1]
-        T = T_data[:,:,t - 1]
-        et_coef = et_coefs[:,:,t - 1]
-        lai = lai_data[:,:,t - 1]
+    # for t in range(1, len(P_data[0,0,:]) + 1):
+    for t in tqdm(range(1, len(P_data[0, 0, :]) + 1)):
+
+        P = P_data[:, :, t - 1]
+        R = R_data[:, :, t - 1]
+        T = T_data[:, :, t - 1]
+        et_coef = et_coefs[:, :, t - 1]
+
         q, e, w, snow = water_balance(w_0, P, R, Snow_0, T, cs, alpha,
                                       et_coef, gamma, c_m)
-        output[:,:,t - 1,0] = q
-        output[:,:,t - 1,1] = e
-        output[:,:,t - 1,2] = w
-        output[:,:,t - 1,3] = snow
-        print('snow_before\n', Snow_0)
-        print('snow\n',snow)
+        output[:, :, t - 1, 0] = q
+        output[:, :, t - 1, 1] = e
+        output[:, :, t - 1, 2] = w
+        output[:, :, t - 1, 3] = snow
 
         w_0 = w
         Snow_0 = snow
-        """print('q, e, w, snow')
-        print(q, e, w, snow)"""
+
     return output
 
 
 def calibration(P_data, R_data, T_data, lai_data, meas_run, calibration_time,
-        cs_values, alpha_values, gamma_values, beta_values, cm_values, et_weights):
+        cs_values, alpha_values, gamma_values, beta_values, cm_values,
+        et_weights):
     """Calibrates the model to the runoff data.
     P_data: list of precipitation data [m/day]
     R_data: list of net radiation data [J/day/m**2]
@@ -180,17 +215,20 @@ def calibration(P_data, R_data, T_data, lai_data, meas_run, calibration_time,
                                    *params)
 
         print(params)
-        corr_P, _ = pearsonr(output_df['runoff'] * 100, meas_run['Value'])  ### hier wird noch die falsche Variable genommen
+        corr_P, _ = pearsonr(output_df['runoff'] * 100, meas_run[
+            'Value'])  ### hier wird noch die falsche Variable genommen
         # print(corr_P)
         if corr_P > correlation_max:
             print(corr_P)
             correlation_max = corr_P
             best_params = params
-            #best_output_df = output_df
+            # best_output_df = output_df
 
-    return best_params #, best_output_df
+    return best_params  # , best_output_df
 
-def calibration_allcatchments(P_data, R_data, T_data, lai_data, meas_run, calibration_time, parameter_combinations): # add temperature data
+
+def calibration_allcatchments(P_data, R_data, T_data, lai_data, meas_run,
+        calibration_time, parameter_combinations):  # add temperature data
     print('start calibration :)')
     '''Calibrates the model to the runoff data.
     P_data: list of precipitation data [m/day]
@@ -207,17 +245,18 @@ def calibration_allcatchments(P_data, R_data, T_data, lai_data, meas_run, calibr
     lai_calibration = np.concatenate(lai_data[0:calibration_time])
 
     corr = []
-    #corr_df['parameters'] = parameter_combinations
+    # corr_df['parameters'] = parameter_combinations
 
     total_runs = len(parameter_combinations)
 
     for run_number, params in enumerate(parameter_combinations, start=1):
-        output_df = time_evolution(P_calibration, R_calibration, T_calibration, lai_calibration, *params)
-        corr_P, _ = pearsonr(output_df['runoff'],meas_run['Value'])
+        output_df = time_evolution(P_calibration, R_calibration, T_calibration,
+                                   lai_calibration, *params)
+        corr_P, _ = pearsonr(output_df['runoff'], meas_run['Value'])
         corr.append(corr_P)
         if run_number % 10 == 0:
             print(f'Run {run_number}/{total_runs} done')
             print(corr_P)
     print('calibration done, this was awesome!!')
-    #print(corr)
+    # print(corr)
     return corr
