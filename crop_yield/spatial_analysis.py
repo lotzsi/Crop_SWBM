@@ -55,7 +55,6 @@ plt.savefig('crop_yield/Figures/grid_points_colored_by_county.png', transparent 
 plt.show()
 
 
-
 #TRY2 Adding the WSI to the counties! 
 # Load the geometries of German counties
 crops_counties = gpd.read_file("data/crop_yield/crop_yield_DE.shp")
@@ -90,7 +89,7 @@ def find_matching_county(point):
             return crops_counties.loc[index, 'NUTS_ID']  # Return the NUTS_ID of the matching county
 
 # Create an empty dictionary to store the soil moisture values for each county and each year
-county_soil_moisture = {county: {str(year): [] for year in range(2000, 2022)} for county in crops_counties['NUTS_ID']}
+county_soil_moisture = {county: {str(year): [] for year in range(2000, 2023)} for county in crops_counties['NUTS_ID']}
 
 # Iterate over each grid cell
 for index, grid_cell in grid_gdf.iterrows():
@@ -99,10 +98,10 @@ for index, grid_cell in grid_gdf.iterrows():
     
     if county_name:
         # Retrieve the soil moisture values for each year for the current grid cell
-        soil_moisture_values = [grid_cell[str(year)] for year in range(2000, 2022)]
+        soil_moisture_values = [grid_cell[str(year)] for year in range(2000, 2023)]
         
         # Append the soil moisture values to the corresponding county and year
-        for year, value in zip(range(2000, 2022), soil_moisture_values):
+        for year, value in zip(range(2000, 2023), soil_moisture_values):
             county_soil_moisture[county_name][str(year)].append(value)
 
 # Calculate the mean soil moisture value for each county for each year
@@ -128,6 +127,8 @@ crops_counties_unique = crops_counties_cleaned.drop_duplicates(subset=['NUTS_ID'
 crops_counties_with_WSI = crops_counties_unique.merge(mean_soil_moisture_df, left_on='NUTS_ID', right_index=True, how='left')
 crops_counties_with_WSI.fillna(0, inplace=True)
 crops_counties_with_WSI.to_file("data/crop_yield/crop_yield_DE_WSI.shp")
+crops_counties_with_WSI.to_csv("data/crop_yield/crop_yield_DE_WSI.csv")
+
 # Plot the polygons
 crops_counties_with_WSI.plot(column='2018', cmap='hot', edgecolor='black', alpha=0.5, legend=True, figsize=(10, 10))
 plt.xlabel('Longitude')
