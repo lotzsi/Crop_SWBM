@@ -10,7 +10,7 @@ longitude_values = np.arange(0,22,1)
 latitude_values = np.arange(0,22,1)
 lati = nc_file.variables['lat'][:]
 loni = nc_file.variables['lon'][:]
-years = np.arange(2000,2025,1)
+years = np.arange(2000,2024,1)
 full_data = np.zeros((8766,len(latitude_values),len(longitude_values)))
 water_stress_value = 300
 water_stress = np.zeros((8766,len(latitude_values),len(longitude_values)))
@@ -31,21 +31,34 @@ for i, lat in enumerate(latitude_values):
 base = dt.datetime(2000,1,1)
 date_list = [base + dt.timedelta(days=x) for x in range(dates[-1]+1)]
 dates = pd.to_datetime(date_list)
-max_valuedf = pd.DataFrame(columns=['lat', 'lon']+ years.astype(str).tolist())
-print(max_valuedf)
-max_value = np.zeros((years[-1]-years[0],len(latitude_values),len(longitude_values)))
+
+years_str = years.astype(str).tolist()
+
+# Create DataFrame with columns for latitude, longitude, and years
+max_valuedf = pd.DataFrame(columns=['lat', 'lon'] + years_str)
+
+# Create an empty array to store maximum values
+max_value = np.zeros((len(years), len(latitude_values), len(longitude_values)))
+
+# Create a list to store dictionaries of data
+data_list = []
 
 for i, lat in enumerate(lati):
     for j, lon in enumerate(loni):
-        df = pd.DataFrame({'date': dates, 'waterstress': water_stress[:,i,j]})
+        # Create DataFrame for water stress data
+        df = pd.DataFrame({'date': dates, 'waterstress': water_stress[:, i, j]})
+        # Group by year and find maximum water stress
         max_values_per_year = df.groupby(df['date'].dt.year)['waterstress'].max()
-        max_value[:,i,j] = max_values_per_year
-        max_valuedf = max_valuedf._append({'lat': lat, 'lon': lon, **max_values_per_year}, ignore_index=True)
+        # Store maximum values in max_value array
+        max_value[:, i, j] = max_values_per_year.values
+        # Append data to data_list
+        data_list.append([lat, lon, *max_values_per_year])
 
-        #max_valuedf = max_valuedf.append({'lat': lat, 'lon': lon, max_values_per_year}, ignore_index=True)
-
-
-max_valuedf.to_csv('crop_yield/maximum_waterstress.csv', index=False)
+# Convert data_list to DataFrame
+columns = ['lat', 'lon'] + years_str
+print(columns)
+max_valuedf = pd.DataFrame(data_list, columns=columns)
+max_valuedf.to_csv('crop_yield/max_valuedf.csv', index=False)
 
 print(max_valuedf)
 fig, ax = plt.subplots()
