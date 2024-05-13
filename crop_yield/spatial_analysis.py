@@ -10,6 +10,13 @@ import matplotlib as mpl
 import pandas as pd
 import os
 
+# First bit just looks for the corresponding county for each grid point and colors the grid points accordingly. The next code chunk 
+# adds the water stress index to the counties and calculates the average. In the Last code chunk we iterate through the whole folder
+# and apply the same procedure to all files in the folder. 
+# to join them to the geometry of the counties a empty geodataframe gets created with just the NUTS_ID and the geometry of the polygon.
+
+#For further processes just put new files in the crop_yield/averaged folder and run the script.
+
 # Load the geometries of German counties
 crops_counties = gpd.read_file("data/crop_yield/crop_yield_DE.shp")
 crops_counties = crops_counties.to_crs(epsg=4326)
