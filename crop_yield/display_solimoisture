@@ -4,7 +4,7 @@ import pandas as pd
 import netCDF4 as nc
 import datetime as dt
 
-file_path1 = 'results\model_output_1715580762.1522522\soil_moisture.nc'
+file_path1 = '/Users/simon/Documents/Master/Semester_4/Applied_Landsurface_Modelling/Crop_SWBM/results/model_output_1715580762.1522522/soil_moisture.nc'
 nc_file = nc.Dataset(file_path1)
 longitude_values = np.arange(0,22,1)
 latitude_values = np.arange(0,22,1)
@@ -29,14 +29,21 @@ for i, lat in enumerate(latitude_values):
 base = dt.datetime(2000,1,1)
 date_list = [base + dt.timedelta(days=x) for x in range(dates[-1]+1)]
 dates = pd.to_datetime(date_list)
+max_valuedf = pd.DataFrame(columns=['lat', 'lon', years.astype(str).tolist()])
+print(max_valuedf)
 max_value = np.zeros((years[-1]-years[0],len(latitude_values),len(longitude_values)))
+
 for i, lat in enumerate(latitude_values):
     for j, lon in enumerate(longitude_values):
+        for year in years:
         df = pd.DataFrame({'date': dates, 'waterstress': water_stress[:,i,j]})
         max_values_per_year = df.groupby(df['date'].dt.year)['waterstress'].max()
+        max_valuedf = max_valuedf.append({'lat': lat, 'lon': lon, max_values_per_year}, ignore_index=True)
         max_value[:,i,j] = max_values_per_year
+
 years = dates.year.values
-print(years)
+
+
 fig, ax = plt.subplots()
 ax.set_xlabel('Date')
 ax.set_ylabel('Soil Moisture [mm]')
@@ -49,5 +56,5 @@ print(max_value[:, 10, 10])
 ax1.set_ylabel('Water Stress [mm]')
 #ax.set_xlim([dates[800], dates[-1]])
 plt.savefig('crop_yield/Figures/soil_moisture.png', transparent=True)
-plt.show()
+#plt.show()
 
