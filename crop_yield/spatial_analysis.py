@@ -40,7 +40,6 @@ grid_polygons = []
 # Iterate over each grid cell center point
 for index, center_point in grid_gdf.iterrows():
     found_match = False  # Flag to indicate if a match is found
-    # Iterate over each county polygon
     for index, county_geometry in crops_counties.geometry.items():
         # Check if the center point is within the county polygon
         if center_point.geometry.within(county_geometry):
@@ -79,6 +78,86 @@ plt.show()
 #}
 #grid_df = pd.DataFrame(data)
 
+# Open the NetCDF file
+precipitation_file = "data/total_precipitation/tp.daily.calc.era5.0d50_CentralEurope.2000.nc"
+nc_file = nc.Dataset(precipitation_file)
+
+lon = nc_file.variables['lon'][:]
+lat = nc_file.variables['lat'][:]
+
+# Create a grid of lon-lat combinations
+lon_grid, lat_grid = np.meshgrid(lon, lat)
+lon_flat, lat_flat = lon_grid.flatten(), lat_grid.flatten()
+
+# Create a GeoDataFrame with Point objects for each lon-lat combination
+grid_gdf = gpd.GeoDataFrame(geometry=[Point(lon_val, lat_val) for lon_val, lat_val in zip(lon_flat, lat_flat)], crs='EPSG:4326')
+grid_gdf.to_crs(crops_counties.crs, inplace=True)
+
+#like this there is just a geometry column in the grid_gdf now I need to append the year values of the water stress index.
+
+# Iterate over each year
+for year in range(2000, 2022):
+    # Extract the water stress index for the current year from the NetCDF file
+    water_stress_index = nc_file.variables[f'WSI_{year}'][:]  # Replace 'water_stress_index' with the actual variable name
+    
+    # Add the water stress index as a new column to the GeoDataFrame
+    grid_gdf[f'WSI_{year}'] = water_stress_index.flatten()
+
+# Close the NetCDF file
+nc_file.close()
+
+# Load the geometries of German counties
+crops_counties = gpd.read_file("data/crop_yield/crop_yield_DE.shp")
+crops_counties = crops_counties.to_crs(epsg=4326)
+
+# Define a function to find the matching county for each point
+def find_matching_county(point):
+    for index, county_geometry in crops_counties.geometry.items():
+        if point.within(county_geometry):
+            return crops_counties.loc[index, 'NUTS_ID']  # Return the NUTS_ID of the matching county
+
+# Create an empty dictionary to store the mean soil moisture values for each county and each year
+county_mean_WSI = {county: {str(year): [] for year in range(2000, 2022)} for county in crops_counties['NUTS_ID']}
+
+# Iterate over each year
+for year in range(2000, 2022):
+    # Iterate over each grid cell center point for the current year
+    for index, center_point in grid_gdf.iterrows():
+        found_match = False  # Flag to indicate if a match is found
+        # Iterate over each county polygon
+        for index, county_geometry in crops_counties.geometry.items():
+            # Check if the center point is within the county polygon
+            if center_point.geometry.within(county_geometry):
+                # If it is, append the soil moisture value to the corresponding county and year
+                county_name = crops_counties.loc[index, 'NUTS_ID']
+                WSI_value = center_point['year'] # Replace ... with your method to retrieve soil moisture value for the grid point
+                WSI_value[county_name][str(year)].append(WSI_value)
+                found_match = True  # Set the flag to True
+                break  # Exit the loop once a matching polygon is found
+        if not found_match:
+            print(f"No matching polygon found for grid cell center point Lon: {center_point.geometry.x}, Lat: {center_point.geometry.y}")
+
+# Calculate the mean soil moisture value for each county for each year
+for county_name, year_values in county_mean_WSI.items():
+    for year, WSI_values in year_values.items():
+        mean_WSI = np.mean(WSI_values)
+        county_mean_WSI[county_name][year] = mean_WSI
+
+# Convert the dictionary to a DataFrame
+mean_WSI_df = pd.DataFrame(county_mean_WSI).T
+
+# Merge the mean soil moisture values with the crops_counties GeoDataFrame
+crops_counties_with_WSI = crops_counties.merge(mean_WSI_df, left_on='NUTS_ID', right_index=True, how='left') 
+
+# Plot the polygons
+crops_counties_with_WSI.plot(column='2000', cmap='viridis', edgecolor='black', alpha=0.5, legend=True, figsize=(10, 10))
+plt.xlabel('Longitude')
+plt.ylabel('Latitude')
+plt.title('Mean Soil Moisture by County for Year 2000')
+plt.savefig('crop_yield/Figures/mean_WSI_by_county_2000.png', transparent=True)
+plt.show()
+
+
 # Create an empty list to store the grid cell center points
 grid_centerpoints = []
 
@@ -106,3 +185,4 @@ for county_name, soil_moisture_values in soil_moisture_by_county.items():
 
 # Print the crops_counties GeoDataFrame with soil moisture values
 print(crops_counties)
+print(crops_counties.head())   

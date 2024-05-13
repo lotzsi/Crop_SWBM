@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from pandas import DataFrame
 import geopandas as gpd
+from shapely import wkt
 
 # Read the data
 data = pd.read_csv("filtered_data.csv")
@@ -105,8 +106,9 @@ detrended_data.columns = data.columns[3:26]
 detrended_data = pd.concat([data.iloc[:, :3], detrended_data], axis=1)
 
 detrended_data.to_csv('crop_yield/detrended_data.csv', index=False)
-# Creating a GeoDataFrame
-gdf = gpd.GeoDataFrame(detrended_data, geometry=geometry)
+# Convert geometry strings to Shapely geometry objects
+detrended_data['geometry'] = detrended_data['geometry'].apply(wkt.loads)
+gdf = gpd.GeoDataFrame(detrended_data)
 
 # Exporting as shapefile
 gdf.to_file("data/crop_yield/crop_yield_DE_detrended_filtered.shp", driver='ESRI Shapefile')
