@@ -37,6 +37,7 @@ colors = {
 }
 
 crop_types = {
+    'C0000' :   'Cereals for the production of grain (including seed)',
     'C1100' :   'Wheat and Spelt',
     'R1000' :   'Potatoes (including seed potatoes)',
     'R2000' :   'Sugar beet (excluding seed)'
