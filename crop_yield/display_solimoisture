@@ -58,7 +58,7 @@ for i, lat in enumerate(lati):
 columns = ['lat', 'lon'] + years_str
 print(columns)
 max_valuedf = pd.DataFrame(data_list, columns=columns)
-max_valuedf.to_csv('crop_yield/max_valuedf.csv', index=False)
+max_valuedf.to_csv('crop_yield/maximum_waterstress.csv', index=False)
 
 print(max_valuedf)
 fig, ax = plt.subplots()
