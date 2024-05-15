@@ -5,9 +5,11 @@ import statsmodels.api as sm
 import geopandas as gpd
 from shapely.geometry import Point
 import numpy as np
-
+from scipy.stats import pearsonr
+import dictionary_states as ds
+import seaborn as sns
 #what do i want: a pandas dataframe with for each state and crop type: year, yiel, (soil moisture, temperature, precipitation, radiation) average and water stress index
-
+results_df = pd.DataFrame(columns=['NUTS_ID', 'crop', 't_temperature', 't_precipitation', 't_radiation'])
 crop = 'C0000'
 state = 'DE4'
 df = pd.DataFrame(columns=['year', 'yield', 'soil moisture', 'temperature', 'precipitation', 'radiation', 'water stress index'])
@@ -20,37 +22,66 @@ precipitation_data = pd.read_csv('crop_yield/averaged/crop_yield_processed/total
 radiation_data = pd.read_csv('crop_yield/averaged/crop_yield_processed/net_radiation39.csv')
 wsi_data = pd.read_csv('crop_yield/averaged/crop_yield_processed/crop_yield_DE_WSI.csv')
 
+for state in ds.important_states:
+    for crop in ds.crop_types:
+        yield_values = yield_data[(yield_data['NUTS_ID'] == state) & (yield_data['crops'] == crop)].loc[:, '2000':'2022'].values
+        soil_moisture_values = soil_moisture_data[(soil_moisture_data['NUTS_ID'] == state)].loc[:, '2000':'2022'].values
+        temperature_values = temperature_data[(temperature_data['NUTS_ID'] == state)].loc[:, '2000':'2022'].values
+        precipitation_values = precipitation_data[(precipitation_data['NUTS_ID'] == state)].loc[:, '2000':'2022'].values
+        radiation_values = radiation_data[(radiation_data['NUTS_ID'] == state)].loc[:, '2000':'2022'].values
+        wsi_values = wsi_data[(wsi_data['NUTS_ID'] == state)].loc[:, '2000':'2022'].values
+        """print('T,SM', pearsonr(temperature_values.flatten(), soil_moisture_values.flatten()))   
+        print('T, P', pearsonr(temperature_values.flatten(), precipitation_values.flatten()))
+        print('T, R', pearsonr(temperature_values.flatten(), radiation_values.flatten()))
+        print('T, WSI', pearsonr(temperature_values.flatten(), wsi_values.flatten()))
+        print('SM, P', pearsonr(soil_moisture_values.flatten(), precipitation_values.flatten()))
+        print('SM, R', pearsonr(soil_moisture_values.flatten(), radiation_values.flatten()))
+        print('SM, WSI', pearsonr(soil_moisture_values.flatten(), wsi_values.flatten()))
+        print('P, R', pearsonr(precipitation_values.flatten(), radiation_values.flatten()))
+        print('P, WSI', pearsonr(precipitation_values.flatten(), wsi_values.flatten()))
+        print('R, WSI', pearsonr(radiation_values.flatten(), wsi_values.flatten()))"""
 
-yield_values = yield_data[(yield_data['NUTS_ID'] == state) & (yield_data['crops'] == crop)].loc[:, '2000':'2022'].values
-soil_moisture_values = soil_moisture_data[(soil_moisture_data['NUTS_ID'] == state)].loc[:, '2000':'2022'].values
-temperature_values = temperature_data[(temperature_data['NUTS_ID'] == state)].loc[:, '2000':'2022'].values
-precipitation_values = precipitation_data[(precipitation_data['NUTS_ID'] == state)].loc[:, '2000':'2022'].values
-radiation_values = radiation_data[(radiation_data['NUTS_ID'] == state)].loc[:, '2000':'2022'].values
-wsi_values = wsi_data[(wsi_data['NUTS_ID'] == state)].loc[:, '2000':'2022'].values
 
-df['yield'] = yield_values.flatten()
-df['soil moisture'] = soil_moisture_values.flatten()
-df['temperature'] = temperature_values.flatten()
-df['precipitation'] = precipitation_values.flatten()
-df['radiation'] = radiation_values.flatten()
-df['water stress index'] = wsi_values.flatten()
-
-x = df[['soil moisture', 'temperature', 'precipitation', 'radiation']]#, 'water stress index']]
-y = df["yield"]
-print(y)
-# Using sklearn
-regression = linear_model.LinearRegression()
-regression.fit(x, y)
-predictions_sklearn = regression.predict(x)
-print("Intercept: \n", regression.intercept_)
-print("Coefficients: \n", regression.coef_)
-
-# Using statsmodels
-x = sm.add_constant(x)
-model = sm.OLS(y, x).fit()
-predictions_statsmodels = model.predict(x)
-summary = model.summary()
-print(summary)
+        df['yield'] = yield_values.flatten()
+        df['soil moisture'] = soil_moisture_values.flatten()
+        df['temperature'] = temperature_values.flatten()
+        df['precipitation'] = precipitation_values.flatten()
+        df['radiation'] = radiation_values.flatten()
+        df['water stress index'] = wsi_values.flatten()
 
 
 
+        x = df[['temperature', 'precipitation', 'radiation']]#, 'soil moisture']]#, 'water stress index']]
+        y = df["yield"]
+        # Using sklearn
+        regression = linear_model.LinearRegression()
+        regression.fit(x, y)
+        predictions_sklearn = regression.predict(x)
+        # Using statsmodels
+        x = sm.add_constant(x)
+        model = sm.OLS(y, x).fit()
+        predictions_statsmodels = model.predict(x)
+        summary = model.summary()
+        t_values = model.tvalues
+        res = {'NUTS_ID': state, 'crop': crop, 't_temperature': t_values['temperature'], 't_precipitation': t_values['precipitation'], 't_radiation': t_values['radiation']}
+        new_row_df = pd.DataFrame(res, index=[0])  # Assuming the index should start from 0
+        # Append the new row to the existing DataFrame
+        results_df = results_df._append(new_row_df, ignore_index=True)
+
+
+
+print(results_df)
+
+df_melted = pd.melt(results_df, id_vars=['NUTS_ID', 'crop'], var_name='Variable', value_name='t_value')
+
+# Plot
+custom_palette = {"t_temperature": "#7ABA78", "t_precipitation": "#F3CA52", "t_radiation": "#F6E9B2"}
+
+plt.figure(figsize=(14, 8))
+sns.boxplot(data=df_melted, x='crop', y='t_value', hue='Variable', palette=custom_palette)
+plt.title('t values for each crop type')
+plt.xlabel('Crop Type')
+plt.ylabel('t value')
+plt.legend(title='Variable')
+plt.savefig('t_values.png', dpi=500, transparent=True)
+plt.show()
