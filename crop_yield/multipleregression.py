@@ -116,7 +116,7 @@ def with_soil_moisture():
     #plt.legend(title='Variable')
     plt.legend(title='Variable', bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=4)
     plt.tight_layout()
-    plt.savefig('crop_yield/Figures/t_values_withSM.png', dpi=500, transparent=True)
+    plt.savefig('crop_yield/Figures/t_values_withSM.png', dpi=500)#, transparent=True)
     plt.show()
 
 #what do i want: a pandas dataframe with for each state and crop type: year, yiel, (soil moisture, temperature, precipitation, radiation) average and water stress index
@@ -226,11 +226,11 @@ def without_soil_moisture():
     #plt.legend(title='Variable')
     plt.legend(title='Variable', bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=4)
     plt.tight_layout()
-    plt.savefig('crop_yield/Figures/t_values_woSM.png', dpi=500, transparent=True)
+    plt.savefig('crop_yield/Figures/t_values_woSM.png', dpi=500)#, transparent=True)
     plt.show()
 
 def correlation():
-    
+
     results_df = pd.DataFrame(columns=['NUTS_ID', 'crop', 'Temperature', 'Precipitation', 'Radiation', 'Soil Moisture'])
     crop = 'C0000'
     state = 'DE4'
