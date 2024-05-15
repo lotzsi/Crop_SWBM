@@ -94,8 +94,8 @@ for date in date_ticks:
 
 
 ax.set_xticks(middles, season_ticks)"""
-#fig = plt.figure(facecolor='#0A6847')
-#plt.gca().set_facecolor('#0A6847')
+"""fig = plt.figure(facecolor='#0A6847')
+plt.gca().set_facecolor('#0A6847')"""
 sns.set_theme()
 plt.fill_between(dates[zero_to_nonzero:max_stress], soil_moisture[zero_to_nonzero:max_stress], water_stress_value, color='red', alpha=0.5)
 plt.fill_between(dates[max_stress:nonzero_to_zero], soil_moisture[max_stress:nonzero_to_zero], water_stress_value, color='green', alpha=0.5)
@@ -109,7 +109,7 @@ plt.gca().axes.get_yaxis().set_visible(False)
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%B'))
 plt.legend(loc='best')
 plt.xticks(rotation=45)
-plt.savefig('crop_yield/Figures/soil_moisture.png', dpi= 500)#, transparent=True)
+plt.savefig('crop_yield/Figures/soil_moisture.png', dpi= 500, transparent=True)
 plt.show()
 
 

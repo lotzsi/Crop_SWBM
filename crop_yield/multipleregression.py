@@ -99,7 +99,7 @@ def with_soil_moisture():
     with open("mean_std_table_wSM.tex", 'w') as f:
         f.write(mean_std_latex)
     df_melted = pd.melt(results_df, id_vars=['NUTS_ID', 'crop'], var_name='Variable', value_name='t_value')
-
+    sns.set_theme()
     # Plot
     custom_palette = {"Temperature": "#7ABA78", "Precipitation": "#F3CA52", "Radiation": "#F6E9B2", "Soil Moisture": '#0A6847'}
     plt.figure(figsize=(14, 8))
@@ -210,6 +210,7 @@ def without_soil_moisture():
     df_melted = pd.melt(results_df, id_vars=['NUTS_ID', 'crop'], var_name='Variable', value_name='t_value')
 
     # Plot
+    sns.set_theme()
     custom_palette = {"Temperature": "#7ABA78", "Precipitation": "#F3CA52", "Radiation": "#F6E9B2", "Soil Moisture": '#0A6847'}
     plt.figure(figsize=(14, 8))
     plt.rcParams.update({'font.size': 14})
@@ -229,6 +230,7 @@ def without_soil_moisture():
     plt.show()
 
 def correlation():
+    
     results_df = pd.DataFrame(columns=['NUTS_ID', 'crop', 'Temperature', 'Precipitation', 'Radiation', 'Soil Moisture'])
     crop = 'C0000'
     state = 'DE4'
@@ -275,6 +277,6 @@ def correlation():
     plt.show()
     print(correlation_matrix)
     print(correlation_matrix_sum)
-#with_soil_moisture()
-#without_soil_moisture()
-correlation()
+with_soil_moisture()
+without_soil_moisture()
+#correlation()
