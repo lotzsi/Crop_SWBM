@@ -50,7 +50,12 @@ print(correlation_results)
 correlation_results.set_index('state', inplace=True)
 
 
-ig, ax = plt.subplots(figsize=(16, 8))
+print(correlation_results['C0000'].values.mean())
+print(correlation_results['C1100'].values.mean())
+print(correlation_results['R1000'].values.mean())
+print(correlation_results['R2000'].values.mean())
+
+fig, ax = plt.subplots(figsize=(16, 8))
 
 # Number of states and crop types
 num_states = len(correlation_results)

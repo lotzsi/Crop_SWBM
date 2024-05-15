@@ -47,7 +47,6 @@ for i, lat in enumerate(latitude_values):
         full_data[i, j, :, 1] = np.concatenate(R_data)
         full_data[i, j, :, 2] = np.concatenate(T_data)
         full_data[i, j, :, 3] = np.concatenate(lai_data)
-
 results = time_evolution(full_data, *params)  # q, e, w, snow
 res_xr_ds = out2xarray(results)
 

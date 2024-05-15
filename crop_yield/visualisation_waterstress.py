@@ -3,12 +3,8 @@ import numpy as np
 import pandas as pd
 import netCDF4 as nc
 import datetime as dt
-
-def highlight_cell(x,y, ax=None, **kwargs):
-    rect = plt.Rectangle((x, y), 0.5,0.5, fill=False, **kwargs)
-    ax = ax or plt.gca()
-    ax.add_patch(rect)
-    return rect
+import matplotlib.dates as mdates
+from datetime import timedelta
 
 file_path1 = 'results/model_output_1715580762.1522522/soil_moisture.nc'
 nc_file = nc.Dataset(file_path1)
@@ -68,60 +64,46 @@ max_valuedf.to_csv('crop_yield/maximum_waterstress.csv', index=False)
 fig, ax = plt.subplots()
 ax.set_xlabel('Date')
 ax.set_ylabel('Soil Moisture [mm]')
-lon_index = int(np.where(abs(loni-11.2) == min(abs(loni-11.2)))[0])
-lat_index = int(np.where(abs(lati-48.2) == min(abs(lati-48.2)))[0])
-print(full_data[:,lat_index,lon_index])
-ax.plot(dates, full_data[:,lat_index,lon_index])
+lon_index = 10
+lat_index = 10
+a = 6600
+b = 7100
+soil_moisture = full_data[a:b,lat_index,lon_index]
+dates = dates[a:b]
+water_stress = water_stress[a:b,lat_index,lon_index]
+max_stress = int(np.where(water_stress == np.max(water_stress))[0])
+# Find the index where the water_stress changes from zero to non-zero
+nonzero_to_zero = int(np.where((water_stress == 0) & (np.roll(water_stress, 1) != 0))[0])
+# Find the index where the water_stress changes from non-zero to zero
+zero_to_nonzero = int(np.where((water_stress != 0) & (np.roll(water_stress, 1) == 0))[0])
+"""seasons = ['Winter', 'Spring', 'Summer', 'Autumn', 'Winter', 'Spring', 'Summer']
+middles = ['2018-01-15', '2018-04-15', '2018-07-15', '2018-10-15', '2019-01-15', '2019-04-15', '2019-07-15']
+middles = [np.datetime64(date) for date in middles]
+date_ticks = [np.datetime64(date) for date in dates]
+
+# Initialize an empty array to store the corresponding season labels
+season_ticks = []
+
+# Iterate through each date in the original date ticks array
+for date in date_ticks:
+    # Find the index of the closest middle date
+    idx = np.abs(np.array(middles) - date).argmin()
+    # Use the corresponding season label for the found middle date
+    season_ticks.append(seasons[idx])
+
+
+ax.set_xticks(middles, season_ticks)"""
+ax.fill_between(dates[zero_to_nonzero:max_stress], soil_moisture[zero_to_nonzero:max_stress], water_stress_value, color='red', alpha=0.5)
+ax.fill_between(dates[max_stress:nonzero_to_zero], soil_moisture[max_stress:nonzero_to_zero], water_stress_value, color='green', alpha=0.5)
+ax.plot(dates, soil_moisture, 'darkblue', label='Soil Moisture [mm]')
+ax.vlines(dates[max_stress], 0, 500, colors='black', linestyles='dashed', label='Maximum Water Stress')
+#ax.set_xlim(np.min(soil_moisture), np.max(soil_moisture))
+ax.hlines(water_stress_value, dates[0], dates[-1] , colors='red', linestyles='dashed', label='Water Stress Value')
 ax1 = ax.twinx()
-ax1.plot(dates, water_stress[:, lat_index, lon_index], 'r')
-#ax1.scatter(years, max_value[:,10,10], color='black')
+ax1.plot(dates, water_stress, 'r')
 ax1.set_ylabel('Water Stress [mm]')
-#ax.set_xlim([dates[800], dates[-1]])
 plt.savefig('crop_yield/Figures/soil_moisture.png', transparent=True)
 plt.show()
-"""
-from mpl_toolkits.basemap import Basemap
-precipitation_file = 'C:/Users/User/Documents/AppliedLandsurfaceModeling/Data/total_precipitation/tp.daily.calc.era5.0d50_CentralEurope.2002.nc'
-coordinates_file = 'C:/Users/User/Documents/AppliedLandsurfaceModeling/justus/catchment_coordinates.txt'
-        # Open the NetCDF file
-nc_file = nc.Dataset(precipitation_file)
-lon = nc_file.variables['lon'][:]
-lat = nc_file.variables['lat'][:]
-data = nc_file.variables['tp'][50, :, :]  # Using arbitrary time index 10
-print(min(lon), max(lon))
-print(min(lat), max(lat))
-# Read catchment coordinates from file        
-catchment_data = np.genfromtxt(coordinates_file, delimiter=',', skip_header=1, dtype=str)
-# Extract latitude and longitude
-catchment_lat = catchment_data[:, 1].astype(float)
-catchment_lon = catchment_data[:, 2].astype(float)
-for ye in range(0, len(years)):
 
-    # Create Basemap instance
-    m = Basemap(llcrnrlon=lon.min(), llcrnrlat=lat.min(),
-                    urcrnrlon=lon.max(), urcrnrlat=lat.max(),
-                    projection='cyl', resolution='l')
-    
-    m.drawcoastlines()
-    m.drawcountries()
-    m.drawstates()
-
-
-
-        # Convert lat/lon values to x/y coordinates
-    min_lon, min_lat = m(lon.min()-0.25, lat.min()-0.25)
-    max_lon, max_lat = m(lon.max()+0.25, lat.max()+0.25)
-    x, y = m(catchment_lon, catchment_lat)
-    a, b = m(lon, lat)
-
-    #mask = np.where(max_value[ye,:,:] != 0, 1, 0)
-    highlight_cell(*m(loni[lon_index], lat[lat_index]), edgecolor='black')
-
-    plt.title(str(years[ye])+'Maximum Water Stress [mm]')
-    #plt.imshow(max_value[ye,:,:], cmap='rainbow')
-    plt.imshow(max_value[ye,:,:], extent=[min_lon, max_lon, min_lat, max_lat], cmap='binary')
-    #plt.imshow(data, extent=[lon.min(), lon.max(), lat.min(), lat.max()], cmap='rainbow')
-    plt.colorbar(label='Water Stress [mm]')
-    plt.show()"""
 
 
