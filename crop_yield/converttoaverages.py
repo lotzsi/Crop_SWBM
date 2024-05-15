@@ -19,17 +19,24 @@ def calc_averages(core, variable, begin, end):
     else:
         variable1 = variable
 
-    for i, lat in enumerate(lati):
-        for j, lon in enumerate(loni):
-            data = []
-            # get radiation, temperature and precipitation data from netCDF files
-            for year in years:
-                file_path1 = 'data/'+core+'/'+variable+'.daily.0d50_CentralEurope.' + str(year) + '.nc'
-                nc_file = nc.Dataset(file_path1)
-                # 7,8 is the grid cell of interest for the respective catchment area
+    if variable == 'soil_moisture':
+        nc_file = nc.Dataset('results/model_output_1715580762.1522522/soil_moisture.nc')
+        for i, lat in enumerate(lati):
+            for j, lon in enumerate(loni):
                 dates = nc_file.variables['time'][:]
-                data.append(nc_file.variables[variable1][:, i, j])
-            full_data[:, i, j] = np.concatenate(data)
+                full_data[:,i,j] = nc_file.variables['soil_moisture'][:,i,j]
+    else:
+        for i, lat in enumerate(lati):
+            for j, lon in enumerate(loni):
+                data = []
+                # get radiation, temperature and precipitation data from netCDF files
+                for year in years:
+                    file_path1 = 'data/'+core+'/'+variable+'.daily.0d50_CentralEurope.' + str(year) + '.nc'
+                    nc_file = nc.Dataset(file_path1)
+                    # 7,8 is the grid cell of interest for the respective catchment area
+                    dates = nc_file.variables['time'][:]
+                    data.append(nc_file.variables[variable1][:, i, j])
+                full_data[:, i, j] = np.concatenate(data)
     if core == 'total_precipitation':
             full_data = full_data * 10 ** 3  # from m/day to mm/day
     if core == 'net_radiation':
@@ -54,8 +61,8 @@ def calc_averages(core, variable, begin, end):
 # Example usage
 #list_of_cores = ['total_precipitation', 'net_radiation', 'daily_average_temperature', 'lai']
 #list_of_variables = ['tp', 'nr', 't2m_mean', 'lai']
-list_of_cores = ['lai']
-list_of_variables = ['lai']
+list_of_cores = ['soil_moisutre']
+list_of_variables = ['soil_moisture']
 for i in range(len(list_of_cores)):
     calc_averages(list_of_cores[i], list_of_variables[i], 3, 9)
 

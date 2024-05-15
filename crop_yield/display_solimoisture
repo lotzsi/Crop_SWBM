@@ -4,6 +4,12 @@ import pandas as pd
 import netCDF4 as nc
 import datetime as dt
 
+def highlight_cell(x,y, ax=None, **kwargs):
+    rect = plt.Rectangle((x, y), 0.5,0.5, fill=False, **kwargs)
+    ax = ax or plt.gca()
+    ax.add_patch(rect)
+    return rect
+
 file_path1 = 'results/model_output_1715580762.1522522/soil_moisture.nc'
 nc_file = nc.Dataset(file_path1)
 longitude_values = np.arange(0,22,1)
@@ -11,6 +17,7 @@ latitude_values = np.arange(0,22,1)
 lati = nc_file.variables['lat'][:]
 loni = nc_file.variables['lon'][:]
 years = np.arange(2000,2024,1)
+print(years)
 full_data = np.zeros((8766,len(latitude_values),len(longitude_values)))
 water_stress_value = 300
 water_stress = np.zeros((8766,len(latitude_values),len(longitude_values)))
@@ -23,8 +30,7 @@ for i, lat in enumerate(latitude_values):
 for i, lat in enumerate(latitude_values):
     for j, lon in enumerate(longitude_values):
         for day in range(1,8766):
-            if water_stress[day,i,j] < water_stress_value:
-                water_stress[day,i,j] = water_stress[day-1,i,j] + (water_stress_value - full_data[day,i,j])
+            water_stress[day,i,j] = water_stress[day-1,i,j] + (water_stress_value - full_data[day,i,j])
             if water_stress[day,i,j] < 0:
                 water_stress[day,i,j] = 0
 
@@ -54,22 +60,71 @@ for i, lat in enumerate(lati):
         # Append data to data_list
         data_list.append([lat, lon, *max_values_per_year])
 
+
 # Convert data_list to DataFrame
 columns = ['lat', 'lon'] + years_str
-print(columns)
 max_valuedf = pd.DataFrame(data_list, columns=columns)
 max_valuedf.to_csv('crop_yield/maximum_waterstress.csv', index=False)
 
-print(max_valuedf)
 fig, ax = plt.subplots()
 ax.set_xlabel('Date')
 ax.set_ylabel('Soil Moisture [mm]')
-ax.plot(dates, full_data[:,10,10])
+lat_index = np.where(lati == 48.25)[0]
+lon_index = np.where(loni == 11.5)[0]
+lon_index = int(np.where(abs(loni-11.2) == min(abs(loni-11.2)))[0])
+lat_index = int(np.where(abs(lati-48.2) == min(abs(lati-48.2)))[0])
+print(full_data[:,lat_index,lon_index])
+ax.plot(dates, full_data[:,lat_index,lon_index])
 ax1 = ax.twinx()
-ax1.plot(dates, water_stress[:,10,10], 'r')
+ax1.plot(dates, water_stress[:, lat_index, lon_index], 'r')
 #ax1.scatter(years, max_value[:,10,10], color='black')
 ax1.set_ylabel('Water Stress [mm]')
 #ax.set_xlim([dates[800], dates[-1]])
 plt.savefig('crop_yield/Figures/soil_moisture.png', transparent=True)
-#plt.show()
+plt.show()
+
+from mpl_toolkits.basemap import Basemap
+precipitation_file = 'C:/Users/User/Documents/AppliedLandsurfaceModeling/Data/total_precipitation/tp.daily.calc.era5.0d50_CentralEurope.2002.nc'
+coordinates_file = 'C:/Users/User/Documents/AppliedLandsurfaceModeling/justus/catchment_coordinates.txt'
+        # Open the NetCDF file
+nc_file = nc.Dataset(precipitation_file)
+lon = nc_file.variables['lon'][:]
+lat = nc_file.variables['lat'][:]
+data = nc_file.variables['tp'][50, :, :]  # Using arbitrary time index 10
+print(min(lon), max(lon))
+print(min(lat), max(lat))
+# Read catchment coordinates from file        
+catchment_data = np.genfromtxt(coordinates_file, delimiter=',', skip_header=1, dtype=str)
+# Extract latitude and longitude
+catchment_lat = catchment_data[:, 1].astype(float)
+catchment_lon = catchment_data[:, 2].astype(float)
+for ye in range(0, len(years)):
+
+    # Create Basemap instance
+    m = Basemap(llcrnrlon=lon.min(), llcrnrlat=lat.min(),
+                    urcrnrlon=lon.max(), urcrnrlat=lat.max(),
+                    projection='cyl', resolution='l')
+    
+    m.drawcoastlines()
+    m.drawcountries()
+    m.drawstates()
+
+
+
+        # Convert lat/lon values to x/y coordinates
+    min_lon, min_lat = m(lon.min()-0.25, lat.min()-0.25)
+    max_lon, max_lat = m(lon.max()+0.25, lat.max()+0.25)
+    x, y = m(catchment_lon, catchment_lat)
+    a, b = m(lon, lat)
+
+    #mask = np.where(max_value[ye,:,:] != 0, 1, 0)
+    highlight_cell(*m(loni[lon_index], lat[lat_index]), edgecolor='black')
+
+    plt.title(str(years[ye])+'Maximum Water Stress [mm]')
+    #plt.imshow(max_value[ye,:,:], cmap='rainbow')
+    plt.imshow(max_value[ye,:,:], extent=[min_lon, max_lon, min_lat, max_lat], cmap='binary')
+    #plt.imshow(data, extent=[lon.min(), lon.max(), lat.min(), lat.max()], cmap='rainbow')
+    plt.colorbar(label='Water Stress [mm]')
+    plt.show()
+
 
