@@ -93,15 +93,18 @@ for date in date_ticks:
 
 
 ax.set_xticks(middles, season_ticks)"""
-ax.fill_between(dates[zero_to_nonzero:max_stress], soil_moisture[zero_to_nonzero:max_stress], water_stress_value, color='red', alpha=0.5)
-ax.fill_between(dates[max_stress:nonzero_to_zero], soil_moisture[max_stress:nonzero_to_zero], water_stress_value, color='green', alpha=0.5)
-ax.plot(dates, soil_moisture, 'darkblue', label='Soil Moisture [mm]')
-ax.vlines(dates[max_stress], 0, 500, colors='black', linestyles='dashed', label='Maximum Water Stress')
+fig = plt.figure(facecolor='#0A6847')
+plt.fill_between(dates[zero_to_nonzero:max_stress], soil_moisture[zero_to_nonzero:max_stress], water_stress_value, color='red', alpha=0.5)
+plt.fill_between(dates[max_stress:nonzero_to_zero], soil_moisture[max_stress:nonzero_to_zero], water_stress_value, color='green', alpha=0.5)
+plt.plot(dates, soil_moisture, 'darkblue', label='Soil Moisture')
+plt.vlines(dates[max_stress], 300, np.max(water_stress)*np.max(soil_moisture), colors='black', alpha=0.5)
 #ax.set_xlim(np.min(soil_moisture), np.max(soil_moisture))
-ax.hlines(water_stress_value, dates[0], dates[-1] , colors='red', linestyles='dashed', label='Water Stress Value')
-ax1 = ax.twinx()
-ax1.plot(dates, water_stress, 'r')
-ax1.set_ylabel('Water Stress [mm]')
+plt.hlines(water_stress_value, dates[0], dates[-1] , colors='black', linestyles='dashed', label='Water stress threshold ', alpha=0.5)
+
+plt.plot(dates, water_stress/np.max(water_stress)*np.max(soil_moisture), 'black', label='Water Stress')
+plt.axis('off')
+
+plt.legend(bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=3)
 plt.savefig('crop_yield/Figures/soil_moisture.png', transparent=True)
 plt.show()
 

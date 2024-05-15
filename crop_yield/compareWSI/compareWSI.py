@@ -174,7 +174,7 @@ def plot_comparison():
     plt.rcParams.update({'font.size': 14})
     df = pd.read_csv('crop_yield/compareWSI/results.csv')
     # Create empty lists to store mean and standard deviation for each water stress index
-    # Convert 'Pearson Correlation' column to numeric
+    # Convert 'Correlation' column to numeric
     df['Pearson Correlation'] = pd.to_numeric(df['Pearson Correlation'], errors='coerce')
     # Group by 'crop_type' and 'Water Stress Index'
     nan_counts = df.groupby(['crop_type', 'Water Stress Index']).apply(lambda x: (x['Pearson Correlation'].isnull().sum() <= 5)).reset_index(name='Less Than 5 NaN')
@@ -204,10 +204,11 @@ def plot_comparison():
 
         i += 14
         plt.legend(bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=5)
-        plt.ylim(-0.7, 0.2)
+        plt.ylim(-0.7, 0.3)
+        plt.xlim(315,395)
         plt.xlabel('Water Stress Index')
-        plt.ylabel('Pearson Correlation')
-        plt.title(f'Pearson Correlation for {ds.crop_types[crop]}')
+        plt.ylabel('Correlation')
+        plt.title(f'Correlation for {ds.crop_short[crop]}', fontsize=25)
         plt.tight_layout()
         plt.savefig(f'crop_yield/compareWSI/correlationcomp_{crop}.png', dpi = 500)#, transparent = True)
         plt.show()
@@ -217,7 +218,7 @@ def plot_comp_comparison():
     plt.rcParams.update({'font.size': 14})
     df = pd.read_csv('crop_yield/compareWSI/results.csv')
     # Create empty lists to store mean and standard deviation for each water stress index
-    # Convert 'Pearson Correlation' column to numeric
+    # Convert 'Correlation' column to numeric
     df['Pearson Correlation'] = pd.to_numeric(df['Pearson Correlation'], errors='coerce')
     # Group by 'crop_type' and 'Water Stress Index'
     nan_counts = df.groupby(['crop_type', 'Water Stress Index']).apply(lambda x: (x['Pearson Correlation'].isnull().sum() <= 5)).reset_index(name='Less Than 5 NaN')
@@ -238,15 +239,17 @@ def plot_comp_comparison():
     for crop in ds.filal_plot_crops:
         water_stress_values = filtered_nan_counts[filtered_nan_counts['crop_type'] == crop]['Water Stress Index'].unique().tolist()
         missing_waterstess = len(water_stress_values)-2
-        plt.plot(water_stress_values, meantolist[i+missing_waterstess:i+14], marker='o', linestyle='-', color=ds.crop_types_colors[crop], label=f'{ds.crop_short[crop]}')
-        plt.fill_between(water_stress_values, meantolist[i+missing_waterstess:i+14]-stdtolist[i+missing_waterstess:i+14], meantolist[i+missing_waterstess:i+14]+stdtolist[i+missing_waterstess:i+14], alpha=0.2, color=ds.crop_types_colors[crop])
+        plt.plot(water_stress_values, meantolist[i+14+missing_waterstess:i+14+14], marker='o', linestyle='-', color=ds.crop_types_colors[crop], label=f'{ds.crop_short[crop]}')
+        plt.fill_between(water_stress_values, meantolist[i+missing_waterstess+14:i+14+14]-stdtolist[i+14+missing_waterstess:i+14+14], meantolist[i+14+missing_waterstess:i+14+14]+stdtolist[i+missing_waterstess+14:i+14+14], alpha=0.2, color=ds.crop_types_colors[crop])
         i += 14
         plt.hlines(-ds.crop_types_correlation[crop], water_stress_values[0], 390, linestyle='--',  color=ds.crop_types_colors[crop]),#label=f'Average correlation for soilmoisture {ds.crop_short[crop]}')
     #plt.plot(water_stress_values, 390*np.ones_like(water_stress_values), linestyle='--', label='Average correlation for soilmoisture', color='grey')
     plt.legend(bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=3)
+    plt.ylim(-0.7, 0.3)
     plt.xlabel('Water Stress Index')
-    plt.ylabel('Pearson Correlation')
-    plt.title(f'Pearson Correlation for all crops')
+    plt.xlim(315,395)
+    plt.ylabel('Correlation')
+    plt.title(f'Correlation for remaining crops', fontsize=25)
     plt.tight_layout()
     plt.savefig(f'crop_yield/compareWSI/correlationcompcomp_{crop}.png', dpi = 500)#, transparent = True)
     plt.show()
@@ -258,7 +261,7 @@ WSI = np.arange(260,400, 10)
     calc_water_stress(i)
     map_to_state(i)
 """
-"""results = pd.DataFrame(columns=['NUTS_ID', 'crop_type', 'Water Stress Index',  'Pearson Correlation'])
+"""results = pd.DataFrame(columns=['NUTS_ID', 'crop_type', 'Water Stress Index',  'Correlation'])
 for state in ds.important_states:
     for crop in ds.crop_types:
         print(crop)
@@ -273,7 +276,7 @@ for state in ds.important_states:
             else:
                 pearson_corr, p = pearsonr(wcorr, cropcorr)
             print(pearson_corr, p)
-            results = results._append({'NUTS_ID': state, 'crop_type': crop, 'Water Stress Index': i, 'Pearson Correlation': pearson_corr}, ignore_index=True)
+            results = results._append({'NUTS_ID': state, 'crop_type': crop, 'Water Stress Index': i, 'Correlation': pearson_corr}, ignore_index=True)
 
 results.to_csv('crop_yield/compareWSI/results.csv')"""
 
