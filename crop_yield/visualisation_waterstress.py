@@ -5,6 +5,7 @@ import netCDF4 as nc
 import datetime as dt
 import matplotlib.dates as mdates
 from datetime import timedelta
+import seaborn as sns
 
 file_path1 = 'results/model_output_1715580762.1522522/soil_moisture.nc'
 nc_file = nc.Dataset(file_path1)
@@ -93,19 +94,22 @@ for date in date_ticks:
 
 
 ax.set_xticks(middles, season_ticks)"""
-fig = plt.figure(facecolor='#0A6847')
+#fig = plt.figure(facecolor='#0A6847')
+#plt.gca().set_facecolor('#0A6847')
+sns.set_theme()
 plt.fill_between(dates[zero_to_nonzero:max_stress], soil_moisture[zero_to_nonzero:max_stress], water_stress_value, color='red', alpha=0.5)
 plt.fill_between(dates[max_stress:nonzero_to_zero], soil_moisture[max_stress:nonzero_to_zero], water_stress_value, color='green', alpha=0.5)
 plt.plot(dates, soil_moisture, 'darkblue', label='Soil Moisture')
-plt.vlines(dates[max_stress], 300, np.max(water_stress)*np.max(soil_moisture), colors='black', alpha=0.5)
+plt.vlines(dates[max_stress], 300, np.max(soil_moisture), alpha=0.5)
 #ax.set_xlim(np.min(soil_moisture), np.max(soil_moisture))
-plt.hlines(water_stress_value, dates[0], dates[-1] , colors='black', linestyles='dashed', label='Water stress threshold ', alpha=0.5)
-
-plt.plot(dates, water_stress/np.max(water_stress)*np.max(soil_moisture), 'black', label='Water Stress')
-plt.axis('off')
-
-plt.legend(bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=3)
-plt.savefig('crop_yield/Figures/soil_moisture.png', transparent=True)
+plt.hlines(water_stress_value, dates[0], dates[-1], linestyles='dashed', label='Water stress threshold ', alpha=0.5)
+plt.xlabel('')
+plt.plot(dates, water_stress/np.max(water_stress)*np.max(soil_moisture), label='Water Stress')
+plt.gca().axes.get_yaxis().set_visible(False)
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%B'))
+plt.legend(loc='best')
+plt.xticks(rotation=45)
+plt.savefig('crop_yield/Figures/soil_moisture.png', dpi= 500)#, transparent=True)
 plt.show()
 
 
