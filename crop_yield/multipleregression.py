@@ -9,7 +9,7 @@ from scipy.stats import pearsonr
 import dictionary_states as ds
 import seaborn as sns
 #what do i want: a pandas dataframe with for each state and crop type: year, yiel, (soil moisture, temperature, precipitation, radiation) average and water stress index
-results_df = pd.DataFrame(columns=['NUTS_ID', 'crop', 't_temperature', 't_precipitation', 't_radiation'])
+results_df = pd.DataFrame(columns=['NUTS_ID', 'crop', 'Temperature', 'Precipitation', 'Radiation'])
 crop = 'C0000'
 state = 'DE4'
 df = pd.DataFrame(columns=['year', 'yield', 'soil moisture', 'temperature', 'precipitation', 'radiation', 'water stress index'])
@@ -63,7 +63,7 @@ for state in ds.important_states:
         predictions_statsmodels = model.predict(x)
         summary = model.summary()
         t_values = model.tvalues
-        res = {'NUTS_ID': state, 'crop': crop, 't_temperature': t_values['temperature'], 't_precipitation': t_values['precipitation'], 't_radiation': t_values['radiation']}
+        res = {'NUTS_ID': state, 'crop': crop, 'Temperature': t_values['temperature'], 'Precipitation': t_values['precipitation'], 'Radiation': t_values['radiation']}
         new_row_df = pd.DataFrame(res, index=[0])  # Assuming the index should start from 0
         # Append the new row to the existing DataFrame
         results_df = results_df._append(new_row_df, ignore_index=True)
@@ -75,13 +75,19 @@ print(results_df)
 df_melted = pd.melt(results_df, id_vars=['NUTS_ID', 'crop'], var_name='Variable', value_name='t_value')
 
 # Plot
-custom_palette = {"t_temperature": "#7ABA78", "t_precipitation": "#F3CA52", "t_radiation": "#F6E9B2"}
-
+custom_palette = {"Temperature": "#7ABA78", "Precipitation": "#F3CA52", "Radiation": "#F6E9B2"}
 plt.figure(figsize=(14, 8))
+plt.rcParams.update({'font.size': 14})
+plt.hlines(0, -1, 4, color='grey', linestyle='--', alpha=0.3)
 sns.boxplot(data=df_melted, x='crop', y='t_value', hue='Variable', palette=custom_palette)
-plt.title('t values for each crop type')
-plt.xlabel('Crop Type')
-plt.ylabel('t value')
+my_ticks = ['Cereals', 'Wheat and Spelt', 'Potatoes', 'Sugar beet']
+plt.xticks(ticks=[0, 1, 2, 3], labels=my_ticks)
+#plt.xticks(rotation=45)
+plt.title("Multiple Linear Regression t-values for each crop type and variable")
+plt.xlabel('')
+
+plt.ylabel('t-value')
 plt.legend(title='Variable')
-plt.savefig('t_values.png', dpi=500, transparent=True)
+plt.tight_layout()
+plt.savefig('crop_yield/Figures/t_values.png', dpi=500, transparent=True)
 plt.show()
