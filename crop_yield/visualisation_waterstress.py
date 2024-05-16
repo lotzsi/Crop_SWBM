@@ -94,21 +94,27 @@ for date in date_ticks:
 
 
 ax.set_xticks(middles, season_ticks)"""
-"""fig = plt.figure(facecolor='#0A6847')
-plt.gca().set_facecolor('#0A6847')"""
-sns.set_theme()
-plt.fill_between(dates[zero_to_nonzero:max_stress], soil_moisture[zero_to_nonzero:max_stress], water_stress_value, color='red', alpha=0.5)
-plt.fill_between(dates[max_stress:nonzero_to_zero], soil_moisture[max_stress:nonzero_to_zero], water_stress_value, color='green', alpha=0.5)
-plt.plot(dates, soil_moisture, 'darkblue', label='Soil Moisture')
-plt.vlines(dates[max_stress], 300, np.max(soil_moisture), alpha=0.5)
+fig = plt.figure(facecolor='#F6E9B2')
+plt.gca().set_facecolor('#F6E9B2')
+#plt.rcParams.update({'font.size': 14})
+
+#sns.set_theme()
+plt.fill_between(dates[zero_to_nonzero:max_stress], soil_moisture[zero_to_nonzero:max_stress], water_stress_value, color='tab:red', alpha =0.9)
+plt.fill_between(dates[max_stress:nonzero_to_zero], soil_moisture[max_stress:nonzero_to_zero], water_stress_value, color='#0A6847')
+plt.plot(dates, soil_moisture, '#7ABA78', label='Soil moisture')
+plt.vlines(dates[max_stress], 300, np.max(soil_moisture), color='grey', alpha=0.5)
+plt.vlines(dates[zero_to_nonzero], 0, soil_moisture[zero_to_nonzero], color='grey', alpha=0.5)
+plt.vlines(dates[nonzero_to_zero], 0, soil_moisture[nonzero_to_zero], color='grey', alpha=0.5)
 #ax.set_xlim(np.min(soil_moisture), np.max(soil_moisture))
-plt.hlines(water_stress_value, dates[0], dates[-1], linestyles='dashed', label='Water stress threshold ', alpha=0.5)
+plt.hlines(water_stress_value, dates[0], dates[-1], linestyles='dashed', label='Water stress threshold ', color= '#CF7967')
 plt.xlabel('')
-plt.plot(dates, water_stress/np.max(water_stress)*np.max(soil_moisture), label='Water Stress')
+plt.plot(dates, water_stress/np.max(water_stress)*np.max(soil_moisture), color='black', label='Water stress')
 plt.gca().axes.get_yaxis().set_visible(False)
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%B'))
-plt.legend(loc='best')
+plt.legend(bbox_to_anchor=(0.5, 1.1), loc='upper center', ncol=3, framealpha=0)  # Place legend at the top
 plt.xticks(rotation=45)
+plt.axis('off') 
+plt.tight_layout()
 plt.savefig('crop_yield/Figures/soil_moisture.png', dpi= 500, transparent=True)
 plt.show()
 

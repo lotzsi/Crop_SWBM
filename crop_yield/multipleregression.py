@@ -109,7 +109,7 @@ def with_soil_moisture():
     my_ticks = ['Cereals', 'Wheat and Spelt', 'Potatoes', 'Sugar beet']
     plt.xticks(ticks=[0, 1, 2, 3], labels=my_ticks)
     #plt.xticks(rotation=45)
-    plt.title("Multiple Linear Regression t-values for each crop type and variable")
+    plt.title("T-values for each crop type and variable incl. SM", fontsize=25)
     plt.xlabel('')
 
     plt.ylabel('t-value')
@@ -219,7 +219,7 @@ def without_soil_moisture():
     my_ticks = ['Cereals', 'Wheat and Spelt', 'Potatoes', 'Sugar beet']
     plt.xticks(ticks=[0, 1, 2, 3], labels=my_ticks)
     #plt.xticks(rotation=45)
-    plt.title("Multiple Linear Regression t-values for each crop type and variable")
+    plt.title("T-values for each crop type and variable excl. SM", fontsize=25)
     plt.xlabel('')
 
     plt.ylabel('t-value')
