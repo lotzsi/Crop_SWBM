@@ -172,7 +172,8 @@ def drop_crop(state, crop, dropped_cols_keys):
 def plot_comparison():
     sns.set_theme()
     plt.rcParams.update({'font.size': 14})
-    df = pd.read_csv('crop_yield/compareWSI/results.csv')
+    df_ = pd.read_csv('crop_yield/compareWSI/results.csv')
+    df = df_[df_['crop_type'] != 'C1100 cereal']
     # Create empty lists to store mean and standard deviation for each water stress index
     # Convert 'Correlation' column to numeric
     df['Pearson Correlation'] = pd.to_numeric(df['Pearson Correlation'], errors='coerce')
@@ -190,7 +191,7 @@ def plot_comparison():
     stdtolist = np.array(std_correlation.tolist())
     i = 0
     color = 'black'
-    for crop in ds.crop_types:
+    for crop in ds.full_crop_types:
         water_stress_values = filtered_nan_counts[filtered_nan_counts['crop_type'] == crop]['Water Stress Index'].unique().tolist()
         missing_waterstess = len(water_stress_values)-2
         fig = plt.figure(figsize=(10, 6))
@@ -204,7 +205,7 @@ def plot_comparison():
 
         i += 14
         plt.legend(bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=5)
-        plt.ylim(-0.7, 0.3)
+        plt.ylim(-0.7, 0.4)
         plt.xlim(315,395)
         plt.xlabel('Water Stress Index')
         plt.ylabel('Correlation')
@@ -215,7 +216,7 @@ def plot_comparison():
 
 def plot_comp_comparison():
     sns.set_theme()
-    plt.rcParams.update({'font.size': 14})
+    plt.rcParams.update({'font.size': 25})
     df = pd.read_csv('crop_yield/compareWSI/results.csv')
     # Create empty lists to store mean and standard deviation for each water stress index
     # Convert 'Correlation' column to numeric
@@ -239,13 +240,13 @@ def plot_comp_comparison():
     for crop in ds.filal_plot_crops:
         water_stress_values = filtered_nan_counts[filtered_nan_counts['crop_type'] == crop]['Water Stress Index'].unique().tolist()
         missing_waterstess = len(water_stress_values)-2
-        plt.plot(water_stress_values, meantolist[i+14+missing_waterstess:i+14+14], marker='o', linestyle='-', color=ds.crop_types_colors[crop], label=f'{ds.crop_short[crop]}')
-        plt.fill_between(water_stress_values, meantolist[i+missing_waterstess+14:i+14+14]-stdtolist[i+14+missing_waterstess:i+14+14], meantolist[i+14+missing_waterstess:i+14+14]+stdtolist[i+missing_waterstess+14:i+14+14], alpha=0.2, color=ds.crop_types_colors[crop])
+        plt.plot(water_stress_values, meantolist[i+14+14+missing_waterstess:i+14+14+14], marker='o', linestyle='-', color=ds.crop_types_colors[crop], label=f'{ds.crop_short[crop]}')
+        plt.fill_between(water_stress_values, meantolist[i+missing_waterstess+14+14:i+14+14+14]-stdtolist[i+14+14+missing_waterstess:i+14+14+14], meantolist[i+14+missing_waterstess+14:i+14+14+14]+stdtolist[i+missing_waterstess+14+14:i+14+14+14], alpha=0.2, color=ds.crop_types_colors[crop])
         i += 14
         plt.hlines(-ds.crop_types_correlation[crop], water_stress_values[0], 390, linestyle='--',  color=ds.crop_types_colors[crop]),#label=f'Average correlation for soilmoisture {ds.crop_short[crop]}')
     #plt.plot(water_stress_values, 390*np.ones_like(water_stress_values), linestyle='--', label='Average correlation for soilmoisture', color='grey')
     plt.legend(bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=3)
-    plt.ylim(-0.7, 0.3)
+    plt.ylim(-0.7, 0.4)
     plt.xlabel('Water Stress Index')
     plt.xlim(315,395)
     plt.ylabel('Correlation')

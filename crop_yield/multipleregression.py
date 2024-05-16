@@ -106,8 +106,8 @@ def with_soil_moisture():
     plt.rcParams.update({'font.size': 14})
     plt.hlines(0, -1, 4, color='grey', linestyle='--', alpha=0.3)
     sns.boxplot(data=df_melted, x='crop', y='t_value', hue='Variable', palette=custom_palette)
-    my_ticks = ['Cereals', 'Wheat and Spelt', 'Potatoes', 'Sugar beet']
-    plt.xticks(ticks=[0, 1, 2, 3], labels=my_ticks)
+    my_ticks = ['Cereals', 'Potatoes', 'Sugar beet']
+    plt.xticks(ticks=[0, 1, 2], labels=my_ticks)
     #plt.xticks(rotation=45)
     plt.title("T-values for each crop type and variable incl. SM", fontsize=25)
     plt.xlabel('')
@@ -134,7 +134,7 @@ def without_soil_moisture():
     precipitation_data = pd.read_csv('crop_yield/averaged/crop_yield_processed/total_precipitation39.csv')
     radiation_data = pd.read_csv('crop_yield/averaged/crop_yield_processed/net_radiation39.csv')
     wsi_data = pd.read_csv('crop_yield/averaged/crop_yield_processed/crop_yield_DE_WSI.csv')
-
+    print(yield_data)
     for state in ds.important_states:
         for crop in ds.crop_types:
             yield_values = yield_data[(yield_data['NUTS_ID'] == state) & (yield_data['crops'] == crop)].loc[:, '2000':'2022'].values
@@ -216,8 +216,8 @@ def without_soil_moisture():
     plt.rcParams.update({'font.size': 14})
     plt.hlines(0, -1, 4, color='grey', linestyle='--', alpha=0.3)
     sns.boxplot(data=df_melted, x='crop', y='t_value', hue='Variable', palette=custom_palette)
-    my_ticks = ['Cereals', 'Wheat and Spelt', 'Potatoes', 'Sugar beet']
-    plt.xticks(ticks=[0, 1, 2, 3], labels=my_ticks)
+    my_ticks = ['Cereals', 'Potatoes', 'Sugar beet']
+    plt.xticks(ticks=[0, 1, 2], labels=my_ticks)
     #plt.xticks(rotation=45)
     plt.title("T-values for each crop type and variable excl. SM", fontsize=25)
     plt.xlabel('')
@@ -230,7 +230,6 @@ def without_soil_moisture():
     plt.show()
 
 def correlation():
-
     results_df = pd.DataFrame(columns=['NUTS_ID', 'crop', 'Temperature', 'Precipitation', 'Radiation', 'Soil Moisture'])
     crop = 'C0000'
     state = 'DE4'
@@ -277,6 +276,19 @@ def correlation():
     plt.show()
     print(correlation_matrix)
     print(correlation_matrix_sum)
-with_soil_moisture()
-without_soil_moisture()
-#correlation()
+
+def calculate_deficit():
+    yield_data = pd.read_csv('crop_yield/detrended_data.csv')
+    print(yield_data)
+    specific_crop_data = yield_data[yield_data['crops'].isin(['C1100'])]
+
+# Print the filtered DataFrame
+    print(specific_crop_data)
+    print(yield_data.groupby('crops')['2018'].mean())
+
+
+if __name__ == '__main__':
+    calculate_deficit()
+    with_soil_moisture()
+    without_soil_moisture()
+    correlation()

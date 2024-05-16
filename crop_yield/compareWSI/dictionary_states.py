@@ -72,7 +72,6 @@ colors = {
 
 crop_types = {
     'C0000' :   'Cereals for the production of grain (including seed)',
-    'C1100' :   'Wheat and Spelt',
     'R1000' :   'Potatoes (including seed potatoes)',
     'R2000' :   'Sugar beet (excluding seed)'
 }
@@ -80,28 +79,33 @@ crop_types = {
 
 crop_short = {
     'C0000' :   'Cereals',
-    'C1100' :   'Wheat and Spelt',
     'R1000' :   'Potatoes',
-    'R2000' :   'Sugar beet'
+    'R2000' :   'Sugar beet',
+    'C1100' :   'Wheat'
 }
 
 filal_plot_crops = {
-    'C1100' :   'Wheat and Spelt',
     'R1000' :   'Potatoes (including seed potatoes)',
     'R2000' :   'Sugar beet (excluding seed)'
-
 }
 
 crop_types_correlation = {
     'C0000': 0.2957806539178431,
-    'C1100': 0.27708268199691793,
     'R1000': 0.47717630126363986,
-    'R2000': 0.33467476859384554
+    'R2000': 0.33467476859384554,
+    'C1100': 0.2957806539178431,
 }
 
 crop_types_colors = {
     'C0000': 'blue',
-    'C1100': 'green',
     'R1000': 'red',
     'R2000': 'purple'
+}
+
+
+full_crop_types = {
+    'C0000' :   'Cereals for the production of grain (including seed)',
+    'C1100' :  'Wheat',
+    'R1000' :   'Potatoes (including seed potatoes)',
+    'R2000' :   'Sugar beet'
 }

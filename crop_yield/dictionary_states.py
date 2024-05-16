@@ -17,6 +17,25 @@ states = {
     'DEG': 'Thuringia'
 }
 
+short_states = {
+    'DE1': 'BW',
+    'DE2': 'BY',
+    'DE3': 'BE',
+    'DE4': 'BB',
+    'DE5': 'HB',
+    'DE6': 'HH',
+    'DE7': 'HE',
+    'DE8': 'MV',
+    'DE9': 'NI',
+    'DEA': 'NW',
+    'DEB': 'RP',
+    'DEC': 'SL',
+    'DED': 'SN',
+    'DEE': 'ST',
+    'DEF': 'SH',
+    'DEG': 'TH'
+}
+
 important_states = {
     'DE1': 'Baden-Württemberg',
     'DE2': 'Bavaria',
@@ -53,7 +72,36 @@ colors = {
 
 crop_types = {
     'C0000' :   'Cereals for the production of grain (including seed)',
-    'C1100' :   'Wheat and Spelt',
     'R1000' :   'Potatoes (including seed potatoes)',
     'R2000' :   'Sugar beet (excluding seed)'
+}
+
+
+crop_short = {
+    'C0000' :   'Cereals',
+    'R1000' :   'Potatoes',
+    'R2000' :   'Sugar beet'
+}
+
+filal_plot_crops = {
+    'R1000' :   'Potatoes (including seed potatoes)',
+    'R2000' :   'Sugar beet (excluding seed)'
+}
+
+crop_types_correlation = {
+    'C0000': 0.2957806539178431,
+    'R1000': 0.47717630126363986,
+    'R2000': 0.33467476859384554
+}
+
+crop_types_colors = {
+    'C0000': 'blue',
+    'R1000': 'red',
+    'R2000': 'purple'
+}
+full_crop_types = {
+    'C0000' :   'Cereals for the production of grain (including seed)',
+    'C1100' :  'Wheat',
+    'R1000' :   'Potatoes (including seed potatoes)',
+    'R2000' :   'Sugar beet'
 }
