@@ -108,7 +108,7 @@ plt.vlines(dates[nonzero_to_zero], 0, soil_moisture[nonzero_to_zero], color='gre
 #ax.set_xlim(np.min(soil_moisture), np.max(soil_moisture))
 plt.hlines(water_stress_value, dates[0], dates[-1], linestyles='dashed', label='Water stress threshold ', color= '#CF7967')
 plt.xlabel('')
-plt.plot(dates, water_stress/np.max(water_stress)*np.max(soil_moisture), color='black', label='Water stress', lw=4)
+plt.plot(dates, water_stress/np.max(water_stress)*np.max(soil_moisture), color='black', label='Water stress index', lw=4)
 plt.gca().axes.get_yaxis().set_visible(False)
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%B'))
 plt.legend(bbox_to_anchor=(0.5, 1.1), loc='upper center', ncol=3, framealpha=0)  # Place legend at the top
